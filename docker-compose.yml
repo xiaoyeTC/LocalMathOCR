@@ -1,0 +1,58 @@
+services:
+  backend-cpu:
+    profiles: ["cpu"]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.cpu
+    container_name: local-math-ocr-backend-cpu
+    environment:
+      APP_DEVICE: cpu
+      DATABASE_URL: sqlite+aiosqlite:///./data/history.db
+      MODEL_DIR: /app/models
+      CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+    volumes:
+      - backend-data:/app/data
+      - model-cache:/app/models
+    ports:
+      - "8000:8000"
+
+  backend-gpu:
+    profiles: ["gpu"]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.gpu
+    container_name: local-math-ocr-backend-gpu
+    environment:
+      APP_DEVICE: cuda
+      DATABASE_URL: sqlite+aiosqlite:///./data/history.db
+      MODEL_DIR: /app/models
+      CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+    volumes:
+      - backend-data:/app/data
+      - model-cache:/app/models
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  frontend:
+    profiles: ["cpu", "gpu"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: local-math-ocr-frontend
+    ports:
+      - "8080:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  backend-data:
+  model-cache:

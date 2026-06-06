@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.sqlite3
+*.db
+
+# Virtual environments
+.venv/
+venv/
+env/
+backend/.venv/
+
+# Runtime / generated
+.runtime/
+backend/data/
+backend/models/
+frontend/dist/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
