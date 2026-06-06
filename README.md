@@ -19,8 +19,6 @@
 
 ## 项目预览
 
-> 下列截图建议放在 `docs/` 目录下，推送到 GitHub 后会自动显示。
-
 ### 主界面
 
 ![LocalMathOCR 主界面](docs/preview-main.png)
