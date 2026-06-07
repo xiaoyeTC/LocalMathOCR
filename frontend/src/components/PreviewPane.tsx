@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
@@ -14,8 +14,8 @@ type ExportFont = {
 };
 
 const EXPORT_FONTS: ExportFont[] = [
-  { label: 'KaTeX 默认', value: 'katex', stack: '' },
   { label: 'Times New Roman', value: 'times', stack: '"Times New Roman", Times, serif' },
+  { label: 'KaTeX 默认', value: 'katex', stack: '' },
   { label: 'Cambria Math', value: 'cambria', stack: '"Cambria Math", Cambria, serif' },
   { label: 'Georgia', value: 'georgia', stack: 'Georgia, "Times New Roman", serif' },
   { label: 'STIX Two Math', value: 'stix', stack: '"STIX Two Math", "STIX Two Text", "Times New Roman", serif' },
@@ -53,6 +53,11 @@ function buildExportContainer(html: string, fontStack: string): HTMLDivElement {
   formula.style.cssText = 'font-size:1.5rem;line-height:2rem;color:#0f172a;';
   if (fontStack) formula.style.fontFamily = fontStack;
   formula.innerHTML = html;
+  if (fontStack) {
+    const style = document.createElement('style');
+    style.textContent = `.katex, .katex * { font-family: ${fontStack} !important; }`;
+    formula.prepend(style);
+  }
 
   wrapper.appendChild(formula);
   container.appendChild(wrapper);
@@ -146,6 +151,9 @@ export function PreviewPane({ latex, onToast }: Props) {
   const [preview, setPreview] = useState<PreviewState>({ html: '', error: '' });
   const [exportFont, setExportFont] = useState(EXPORT_FONTS[0].value);
   const selectedFont = EXPORT_FONTS.find((font) => font.value === exportFont) ?? EXPORT_FONTS[0];
+  const previewFontStyle = selectedFont.stack
+    ? ({ '--formula-font-family': selectedFont.stack, fontFamily: selectedFont.stack } as CSSProperties)
+    : undefined;
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -221,6 +229,7 @@ export function PreviewPane({ latex, onToast }: Props) {
 
   return (
     <section className="flex min-h-[420px] flex-col rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <style>{'.formula-preview-font .katex, .formula-preview-font .katex * { font-family: var(--formula-font-family) !important; }'}</style>
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
         <h3 className="font-bold text-slate-900 dark:text-white">实时预览</h3>
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -247,8 +256,8 @@ export function PreviewPane({ latex, onToast }: Props) {
         ) : preview.html ? (
           <div
             ref={previewRef}
-            className="inline-block text-2xl"
-            style={selectedFont.stack ? { fontFamily: selectedFont.stack } : undefined}
+            className="formula-preview-font inline-block text-2xl"
+            style={previewFontStyle}
             dangerouslySetInnerHTML={{ __html: preview.html }}
           />
         ) : (

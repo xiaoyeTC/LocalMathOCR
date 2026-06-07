@@ -8,15 +8,15 @@ from app.config import get_settings
 from app.routers.history import router as history_router
 from app.routers.ocr import router as ocr_router
 from app.services.db import init_db
-from app.services.ocr_engine import Pix2TexEngine
+from app.services.model_manager import ModelManager
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    engine = Pix2TexEngine()
-    app.state.ocr_engine = engine
-    task = asyncio.create_task(engine.load_async())
+    manager = ModelManager()
+    app.state.model_manager = manager
+    task = asyncio.create_task(manager.preload_default())
     app.state.model_task = task
     yield
     if not task.done():

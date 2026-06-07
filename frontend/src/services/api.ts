@@ -1,17 +1,52 @@
 export type ApiResponse<T> = { code: number; message: string; data: T };
+export type ModelRuntimeState = 'downloading' | 'ready' | 'unavailable';
 export type ModelStatus = {
-  status: 'loading' | 'ready' | 'error';
+  status: ModelRuntimeState;
+  model_id?: string;
+  active_model_id?: string | null;
   requested_device?: 'auto' | 'cuda' | 'cpu';
   device: 'cuda' | 'cpu';
   message: string;
+  progress: number;
   cuda_available?: boolean;
   torch_version?: string | null;
   torch_cuda_version?: string | null;
   cuda_device_count?: number;
   cuda_device_name?: string | null;
 };
-export type RecognizeResult = { latex: string; inference_time_ms: number; variant?: string; preprocessed_image_base64?: string | null };
+export type OcrModelMetadata = {
+  id: string;
+  display_name: string;
+  description: string;
+  vram_requirement: string;
+  strengths: string[];
+  enabled: boolean;
+  status: ModelRuntimeState;
+  progress: number;
+  device: 'cuda' | 'cpu';
+  message: string;
+  active: boolean;
+  is_default: boolean;
+};
+export type ModelsEventPayload = {
+  active_model_id: string | null;
+  default_model_id: string;
+  models: OcrModelMetadata[];
+};
+export type RecognizeResult = { latex: string; inference_time_ms: number; variant?: string; model_id?: string; preprocessed_image_base64?: string | null };
 export type HistoryItem = { id: number; latex: string; image_base64?: string | null; created_at: string };
+
+export class ApiError extends Error {
+  status: number;
+  fallbackModelId?: string;
+
+  constructor(message: string, status: number, fallbackModelId?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.fallbackModelId = fallbackModelId;
+  }
+}
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -25,20 +60,36 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(body?.detail || body?.message || `HTTP ${res.status}`);
+    const detail = body?.detail;
+    const message = typeof detail === 'string' ? detail : detail?.message || body?.message || `HTTP ${res.status}`;
+    throw new ApiError(message, res.status, detail?.fallback_model_id);
   }
   return (body as ApiResponse<T>).data;
 }
 
-export async function getModelStatus(): Promise<ModelStatus> {
-  return request<ModelStatus>('/model-status');
+export async function getModelStatus(modelId?: string): Promise<ModelStatus> {
+  const query = modelId ? `?model_id=${encodeURIComponent(modelId)}` : '';
+  return request<ModelStatus>(`/model-status${query}`);
 }
 
-export async function recognizeFormula(file: File, preprocess = true): Promise<RecognizeResult> {
+export async function getModels(): Promise<ModelsEventPayload> {
+  return request<ModelsEventPayload>('/models');
+}
+
+export function createModelEvents(): EventSource {
+  return new EventSource(`${API_BASE_URL}/models/events`);
+}
+
+export async function activateModel(modelId: string): Promise<ModelStatus> {
+  return request<ModelStatus>(`/models/${encodeURIComponent(modelId)}/activate`, { method: 'POST' });
+}
+
+export async function recognizeFormula(file: File, preprocess = true, modelId?: string): Promise<RecognizeResult> {
   const form = new FormData();
   form.append('file', file);
   form.append('preprocess', String(preprocess));
-  return request<RecognizeResult>('/recognize', { method: 'POST', body: form });
+  if (modelId) form.append('model_id', modelId);
+  return request<RecognizeResult>('/ocr', { method: 'POST', body: form });
 }
 
 export async function getHistory(): Promise<HistoryItem[]> {

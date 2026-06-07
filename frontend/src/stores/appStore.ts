@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { HistoryItem, ModelStatus } from '../services/api';
+import type { HistoryItem, ModelStatus, OcrModelMetadata } from '../services/api';
 
 type AppState = {
   latex: string;
@@ -7,6 +7,8 @@ type AppState = {
   loading: boolean;
   preprocess: boolean;
   modelStatus: ModelStatus;
+  models: OcrModelMetadata[];
+  selectedModelId: string;
   history: HistoryItem[];
   setLatex: (latex: string) => void;
   insertLatex: (snippet: string) => void;
@@ -14,6 +16,8 @@ type AppState = {
   setLoading: (loading: boolean) => void;
   setPreprocess: (preprocess: boolean) => void;
   setModelStatus: (status: ModelStatus) => void;
+  setModels: (models: OcrModelMetadata[]) => void;
+  setSelectedModelId: (modelId: string) => void;
   setHistory: (history: HistoryItem[]) => void;
 };
 
@@ -24,7 +28,9 @@ export const useAppStore = create<AppState>((set) => ({
   toast: '',
   loading: false,
   preprocess: false,
-  modelStatus: { status: 'loading', device: 'cpu', message: '正在连接本地模型服务' },
+  modelStatus: { status: 'downloading', device: 'cpu', message: '正在连接本地模型服务', progress: 0 },
+  models: [],
+  selectedModelId: 'pix2tex',
   history: [],
   setLatex: (latex) => set({ latex }),
   insertLatex: (snippet) => set((state) => ({ latex: `${state.latex}${snippet}` })),
@@ -32,5 +38,7 @@ export const useAppStore = create<AppState>((set) => ({
   setLoading: (loading) => set({ loading }),
   setPreprocess: (preprocess) => set({ preprocess }),
   setModelStatus: (modelStatus) => set({ modelStatus }),
+  setModels: (models) => set({ models }),
+  setSelectedModelId: (selectedModelId) => set({ selectedModelId }),
   setHistory: (history) => set({ history }),
 }));

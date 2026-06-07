@@ -7,8 +7,8 @@ type Props = {
 };
 
 export function Header({ modelStatus, dark, onToggleDark }: Props) {
-  const statusClass = modelStatus.status === 'ready' ? 'bg-emerald-500' : modelStatus.status === 'error' ? 'bg-red-500' : 'bg-amber-500';
-  const label = modelStatus.status === 'ready' ? '就绪' : modelStatus.status === 'error' ? '异常' : '加载中';
+  const statusClass = modelStatus.status === 'ready' ? 'bg-emerald-500' : modelStatus.status === 'downloading' ? 'bg-amber-500' : 'bg-slate-400';
+  const label = modelStatus.status === 'ready' ? '就绪' : modelStatus.status === 'downloading' ? `下载/加载 ${modelStatus.progress}%` : '未启用';
   const requested = modelStatus.requested_device?.toUpperCase();
   const actual = modelStatus.device.toUpperCase();
   const deviceLabel = requested && requested !== actual ? `${requested} → ${actual}` : actual;

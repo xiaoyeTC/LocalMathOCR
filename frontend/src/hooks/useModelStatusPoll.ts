@@ -4,16 +4,17 @@ import { useAppStore } from '../stores/appStore';
 
 export function useModelStatusPoll(intervalMs = 2000) {
   const setModelStatus = useAppStore((state) => state.setModelStatus);
+  const selectedModelId = useAppStore((state) => state.selectedModelId);
 
   useEffect(() => {
     let active = true;
     async function poll() {
       try {
-        const status = await getModelStatus();
+        const status = await getModelStatus(selectedModelId);
         if (active) setModelStatus(status);
       } catch (error) {
         if (active) {
-          setModelStatus({ status: 'error', device: 'cpu', message: error instanceof Error ? error.message : '模型服务不可用' });
+          setModelStatus({ status: 'unavailable', device: 'cpu', message: error instanceof Error ? error.message : '模型服务不可用', progress: 0 });
         }
       }
     }
@@ -23,5 +24,5 @@ export function useModelStatusPoll(intervalMs = 2000) {
       active = false;
       window.clearInterval(timer);
     };
-  }, [intervalMs, setModelStatus]);
+  }, [intervalMs, selectedModelId, setModelStatus]);
 }

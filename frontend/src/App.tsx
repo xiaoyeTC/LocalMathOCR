@@ -2,14 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { Header } from './components/Header';
 import { HistorySidebar } from './components/HistorySidebar';
 import { LatexEditor } from './components/LatexEditor';
+import { ModelSelector } from './components/ModelSelector';
 import { PreviewPane } from './components/PreviewPane';
 import { SymbolPanel } from './components/SymbolPanel';
 import { Toast } from './components/Toast';
 import { UploadZone } from './components/UploadZone';
-import { useModelStatusPoll } from './hooks/useModelStatusPoll';
 import { usePasteImage } from './hooks/usePasteImage';
-import { clearHistory, deleteHistory, getHistory, recognizeFormula } from './services/api';
+import { ApiError, activateModel, clearHistory, createModelEvents, deleteHistory, getHistory, getModels, recognizeFormula, type ModelsEventPayload } from './services/api';
 import { useAppStore } from './stores/appStore';
+
+const FALLBACK_MODEL_ID = 'pix2tex';
 
 export default function App() {
   const [dark, setDark] = useState(false);
@@ -19,16 +21,19 @@ export default function App() {
     loading,
     preprocess,
     modelStatus,
+    models,
+    selectedModelId,
     history,
     setLatex,
     insertLatex,
     setToast,
     setLoading,
     setPreprocess,
+    setModelStatus,
+    setModels,
+    setSelectedModelId,
     setHistory,
   } = useAppStore();
-
-  useModelStatusPoll();
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
@@ -36,8 +41,33 @@ export default function App() {
 
   const showToast = useCallback((message: string) => {
     setToast(message);
-    window.setTimeout(() => setToast(''), 2200);
+    window.setTimeout(() => setToast(''), 2600);
   }, [setToast]);
+
+  const applyModelPayload = useCallback((payload: ModelsEventPayload) => {
+    setModels(payload.models);
+    const active = payload.models.find((model) => model.active) || payload.models.find((model) => model.id === payload.active_model_id);
+    const selected = active || payload.models.find((model) => model.id === selectedModelId) || payload.models.find((model) => model.is_default) || payload.models[0];
+    if (selected) {
+      setSelectedModelId(selected.id);
+      setModelStatus({
+        status: selected.status,
+        model_id: selected.id,
+        active_model_id: payload.active_model_id,
+        device: selected.device,
+        message: selected.message,
+        progress: selected.progress,
+      });
+    }
+  }, [selectedModelId, setModelStatus, setModels, setSelectedModelId]);
+
+  const refreshModels = useCallback(async () => {
+    try {
+      applyModelPayload(await getModels());
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '模型列表加载失败');
+    }
+  }, [applyModelPayload, showToast]);
 
   const refreshHistory = useCallback(async () => {
     try {
@@ -48,26 +78,82 @@ export default function App() {
   }, [setHistory, showToast]);
 
   useEffect(() => {
+    refreshModels();
     refreshHistory();
-  }, [refreshHistory]);
+  }, [refreshModels, refreshHistory]);
+
+  useEffect(() => {
+    const source = createModelEvents();
+    source.addEventListener('models', (event) => {
+      try {
+        applyModelPayload(JSON.parse((event as MessageEvent).data));
+      } catch {
+        showToast('模型状态流解析失败');
+      }
+    });
+    source.onerror = () => {
+      setModelStatus({ status: 'unavailable', device: 'cpu', message: '模型状态流已断开，正在等待重连', progress: 0 });
+    };
+    return () => source.close();
+  }, [applyModelPayload, setModelStatus, showToast]);
+
+  const handleSelectModel = useCallback(async (modelId: string) => {
+    const target = models.find((model) => model.id === modelId);
+    if (!target || target.status !== 'ready') {
+      showToast(target?.message || '模型尚未就绪');
+      return;
+    }
+    setSelectedModelId(modelId);
+    setLoading(true);
+    try {
+      await activateModel(modelId);
+      showToast(`已切换到 ${target.display_name}`);
+      await refreshModels();
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '模型切换失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [models, refreshModels, setLoading, setSelectedModelId, showToast]);
+
+  const runRecognition = useCallback(async (file: File, modelId: string) => {
+    const result = await recognizeFormula(file, preprocess, modelId);
+    setLatex(result.latex);
+    const modelName = models.find((model) => model.id === result.model_id)?.display_name || result.model_id || modelId;
+    showToast(`识别完成：${result.inference_time_ms}ms · ${modelName}`);
+    await refreshHistory();
+    await refreshModels();
+  }, [models, preprocess, refreshHistory, refreshModels, setLatex, showToast]);
 
   const handleFile = useCallback(async (file: File) => {
-    if (modelStatus.status !== 'ready') {
-      showToast('模型尚未就绪');
+    if (modelStatus.status === 'downloading') {
+      showToast('模型正在下载或加载，请稍候');
+      return;
+    }
+    if (modelStatus.status === 'unavailable') {
+      showToast('当前模型未启用，请选择可用模型');
       return;
     }
     setLoading(true);
     try {
-      const result = await recognizeFormula(file, preprocess);
-      setLatex(result.latex);
-      showToast(`识别完成：${result.inference_time_ms}ms`);
-      await refreshHistory();
+      await runRecognition(file, selectedModelId);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '识别失败');
+      if (error instanceof ApiError && error.fallbackModelId) {
+        setSelectedModelId(error.fallbackModelId);
+        showToast('所选模型不可用，已回退到基础版并重试');
+        try {
+          await activateModel(error.fallbackModelId || FALLBACK_MODEL_ID);
+          await runRecognition(file, error.fallbackModelId || FALLBACK_MODEL_ID);
+        } catch (fallbackError) {
+          showToast(fallbackError instanceof Error ? fallbackError.message : '基础版重试失败');
+        }
+      } else {
+        showToast(error instanceof Error ? error.message : '识别失败');
+      }
     } finally {
       setLoading(false);
     }
-  }, [modelStatus.status, preprocess, refreshHistory, setLatex, setLoading, showToast]);
+  }, [modelStatus.status, runRecognition, selectedModelId, setLoading, setSelectedModelId, showToast]);
 
   usePasteImage(handleFile);
 
@@ -105,11 +191,12 @@ export default function App() {
         <section className="mb-8 text-center">
           <p className="text-sm font-semibold text-primary">100% 本地推理 · 零外部识别 API 成本</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-950 dark:text-white md:text-5xl">本地智能数学公式识别</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-300">上传、拖拽或粘贴公式截图，使用本地 pix2tex 模型生成 LaTeX，并实时渲染预览。</p>
+          <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-300">上传、拖拽或粘贴公式截图，按场景选择本地 OCR 模型生成 LaTeX，并实时渲染预览。</p>
         </section>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
+            <ModelSelector models={models} selectedModelId={selectedModelId} disabled={loading} onChange={handleSelectModel} />
             <UploadZone modelStatus={modelStatus} loading={loading} preprocess={preprocess} onTogglePreprocess={setPreprocess} onFile={handleFile} />
             <div className="grid gap-6 lg:grid-cols-2">
               <LatexEditor value={latex} onChange={setLatex} onCopy={copyLatex} />

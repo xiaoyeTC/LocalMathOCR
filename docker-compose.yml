@@ -10,6 +10,12 @@ services:
       DATABASE_URL: sqlite+aiosqlite:///./data/history.db
       MODEL_DIR: /app/models
       CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+      DEFAULT_MODEL_ID: pix2tex
+      ENABLE_PIX2TEX: "true"
+      ENABLE_LATEX_OCR: "true"
+      ENABLE_UNI_EQUATION: "false"
+      MAX_LOADED_MODELS: "1"
+      PRELOAD_MODELS: pix2tex
     volumes:
       - backend-data:/app/data
       - model-cache:/app/models
@@ -27,6 +33,12 @@ services:
       DATABASE_URL: sqlite+aiosqlite:///./data/history.db
       MODEL_DIR: /app/models
       CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+      DEFAULT_MODEL_ID: pix2tex
+      ENABLE_PIX2TEX: "true"
+      ENABLE_LATEX_OCR: "true"
+      ENABLE_UNI_EQUATION: "false"
+      MAX_LOADED_MODELS: "1"
+      PRELOAD_MODELS: pix2tex
     volumes:
       - backend-data:/app/data
       - model-cache:/app/models

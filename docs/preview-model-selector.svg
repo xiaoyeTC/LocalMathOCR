@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#eff6ff"/>
+      <stop offset="1" stop-color="#f8fafc"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#0f172a" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="520" rx="32" fill="url(#bg)"/>
+  <text x="60" y="72" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="#0f172a">多模型选择与状态同步</text>
+  <text x="60" y="108" font-family="Arial, sans-serif" font-size="18" fill="#475569">ready 可切换 · downloading 显示进度 · unavailable 自动置灰</text>
+
+  <g filter="url(#shadow)">
+    <rect x="60" y="150" width="330" height="250" rx="24" fill="#ffffff" stroke="#2563eb" stroke-width="3"/>
+    <text x="90" y="205" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#0f172a">基础版 Pix2Tex</text>
+    <text x="90" y="242" font-family="Arial, sans-serif" font-size="17" fill="#475569">速度极快，CPU 友好</text>
+    <text x="90" y="276" font-family="Arial, sans-serif" font-size="17" fill="#475569">适合清晰单行公式</text>
+    <rect x="90" y="318" width="110" height="34" rx="17" fill="#2563eb"/>
+    <text x="120" y="341" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#fff">当前使用</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="435" y="150" width="330" height="250" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+    <text x="465" y="205" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#0f172a">高精度 LaTeX_OCR</text>
+    <text x="465" y="242" font-family="Arial, sans-serif" font-size="17" fill="#475569">独立权重配置后启用</text>
+    <text x="465" y="276" font-family="Arial, sans-serif" font-size="17" fill="#475569">适合上下标、希腊字母</text>
+    <rect x="465" y="318" width="92" height="34" rx="17" fill="#e0f2fe"/>
+    <text x="488" y="341" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#0369a1">可切换</text>
+  </g>
+
+  <g filter="url(#shadow)" opacity="0.72">
+    <rect x="810" y="150" width="330" height="250" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+    <text x="840" y="205" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#0f172a">专业版 Uni-Equation</text>
+    <text x="840" y="242" font-family="Arial, sans-serif" font-size="17" fill="#475569">复杂公式、多层矩阵</text>
+    <text x="840" y="276" font-family="Arial, sans-serif" font-size="17" fill="#475569">需配置模型来源与大显存</text>
+    <rect x="840" y="318" width="92" height="34" rx="17" fill="#f1f5f9"/>
+    <text x="863" y="341" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#64748b">未启用</text>
+  </g>
+</svg>

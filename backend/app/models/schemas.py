@@ -13,14 +13,33 @@ class ApiResponse(BaseModel, Generic[T]):
 
 
 class ModelStatus(BaseModel):
-    status: Literal["loading", "ready", "error"]
+    status: Literal["downloading", "ready", "unavailable"]
     device: Literal["cuda", "cpu"]
     message: str
+    progress: int = 0
+    active_model_id: str | None = None
+
+
+class OcrModelMetadata(BaseModel):
+    id: str
+    display_name: str
+    description: str
+    vram_requirement: str
+    strengths: list[str]
+    enabled: bool = True
+    status: Literal["downloading", "ready", "unavailable"] = "unavailable"
+    progress: int = 0
+    device: Literal["cuda", "cpu"] = "cpu"
+    message: str = "model is not initialized"
+    active: bool = False
+    is_default: bool = False
 
 
 class RecognizeResult(BaseModel):
     latex: str
     inference_time_ms: int
+    variant: str | None = None
+    model_id: str | None = None
     preprocessed_image_base64: str | None = None
 
 
