@@ -108,6 +108,76 @@ def preprocess_image(file_bytes: bytes) -> PreprocessResult:
     return PreprocessResult(image=processed, data_url=image_to_data_url(processed))
 
 
+def enhance_formula_image(image: Image.Image) -> Image.Image:
+    """对公式图像进行增强预处理，提升低质量图片的识别准确率。
+
+    适用场景：
+    - 带有浅色背景的 PPT 截图
+    - 模糊的 PDF 截图
+    - 低对比度的打印/手写公式照片
+
+    处理流程：
+    1. 转灰度图
+    2. 自适应二值化去除浅色背景干扰
+    3. 非局部均值去噪去除噪点
+    4. 卷积核锐化增强符号边缘
+    5. 2倍放大提升上下标识别召回率
+
+    如果任何步骤失败，返回原图，确保不会导致服务崩溃。
+    """
+    try:
+        # 第1步：PIL Image -> OpenCV ndarray (灰度)
+        gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+
+        # 第2步：自适应二值化去除浅色背景干扰
+        # blockSize=31 给出较大的局部窗口，适合处理光照不均匀的截图
+        # C=15 稍高的常量偏移，确保浅灰色背景被压成白色
+        binary = cv2.adaptiveThreshold(
+            gray,
+            255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY,
+            blockSize=31,
+            C=15,
+        )
+
+        # 第3步：非局部均值去噪
+        # h=12 控制滤波强度，对二值化后的残留噪点效果好
+        # templateWindowSize=7 / searchWindowSize=21 是经验值
+        denoised = cv2.fastNlMeansDenoising(
+            binary,
+            None,
+            h=12,
+            templateWindowSize=7,
+            searchWindowSize=21,
+        )
+
+        # 第4步：卷积核锐化增强符号边缘
+        # 3x3 锐化核，中心权重 5，周围 -1，轻度锐化不会产生过多振铃
+        sharpen_kernel = np.array(
+            [[0, -1, 0],
+             [-1, 5, -1],
+             [0, -1, 0]],
+            dtype=np.float32,
+        )
+        sharpened = cv2.filter2D(denoised, -1, sharpen_kernel)
+
+        # 第5步：2倍放大，使用 INTER_CUBIC 插值提升上下标细节
+        h, w = sharpened.shape[:2]
+        upscaled = cv2.resize(
+            sharpened,
+            (w * 2, h * 2),
+            interpolation=cv2.INTER_CUBIC,
+        )
+
+        # OpenCV ndarray -> PIL Image（灰度 -> RGB，兼容 pix2tex 输入要求）
+        return Image.fromarray(upscaled).convert("RGB")
+
+    except Exception:
+        # 预处理任意步骤失败时，回退到原图，避免服务中断
+        return image
+
+
 def make_thumbnail_data_url(file_bytes: bytes, max_size: tuple[int, int] = (320, 180)) -> str:
     image = read_image(file_bytes)
     image.thumbnail(max_size)

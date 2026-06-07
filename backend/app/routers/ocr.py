@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form
 
 from app.config import get_settings
 from app.routers.common import get_ocr_engine, success
-from app.services.preprocess import make_thumbnail_data_url, preprocess_image, read_image
+from app.services.preprocess import enhance_formula_image, make_thumbnail_data_url, preprocess_image, read_image
 from app.services.db import AsyncSessionLocal, create_history
 
 router = APIRouter(prefix="/api", tags=["ocr"])
@@ -72,6 +72,9 @@ async def recognize(request: Request, file: UploadFile = File(...), preprocess: 
     predictions = [await engine.predict(original_image, "original")]
     if preprocess and _is_suspicious_latex(predictions[0].latex):
         predictions.append(await engine.predict(processed.image, "preprocessed"))
+        # 第三变体：对低质量图片（浅色背景PPT截图、模糊PDF截图）进行增强预处理
+        enhanced_image = enhance_formula_image(original_image)
+        predictions.append(await engine.predict(enhanced_image, "enhanced"))
 
     prediction = max(predictions, key=lambda item: _latex_score(item.latex))
     thumbnail = make_thumbnail_data_url(file_bytes)
