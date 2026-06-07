@@ -21,11 +21,11 @@
 
 ### 主界面
 
-![LocalMathOCR 主界面](docs/preview-main.svg)
+![LocalMathOCR 主界面](docs/preview-main.png)
 
 ### 导出与字体选择
 
-![LocalMathOCR 导出与字体选择](docs/preview-export.svg)
+![LocalMathOCR 导出与字体选择](docs/preview-export.png)
 
 ### 模型选择与状态同步
 
