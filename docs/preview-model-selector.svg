@@ -1,41 +1,65 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="640" viewBox="0 0 1180 640">
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#eff6ff"/>
+      <stop offset="0" stop-color="#eef6ff"/>
       <stop offset="1" stop-color="#f8fafc"/>
     </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#0f172a" flood-opacity="0.15"/>
+    <filter id="shadow" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#0f172a" flood-opacity="0.12"/>
     </filter>
+    <style>
+      .title{font-family:Arial,'Microsoft YaHei',sans-serif;font-weight:800;fill:#0f172a}.muted{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#64748b}.small{font-family:Arial,'Microsoft YaHei',sans-serif;font-size:13px;fill:#64748b}.card-title{font-family:Arial,'Microsoft YaHei',sans-serif;font-size:22px;font-weight:800;fill:#0f172a}.tag{font-family:Arial,'Microsoft YaHei',sans-serif;font-size:12px;font-weight:700}.button{font-family:Arial,'Microsoft YaHei',sans-serif;font-size:14px;font-weight:800}
+    </style>
   </defs>
-  <rect width="1200" height="520" rx="32" fill="url(#bg)"/>
-  <text x="60" y="72" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="#0f172a">多模型选择与状态同步</text>
-  <text x="60" y="108" font-family="Arial, sans-serif" font-size="18" fill="#475569">ready 可切换 · downloading 显示进度 · unavailable 自动置灰</text>
+  <rect width="1180" height="640" rx="30" fill="url(#bg)"/>
+  <text x="52" y="66" class="title" font-size="32">模型选择与实时状态同步</text>
+  <text x="52" y="98" class="muted" font-size="16">前端通过 SSE 实时接收 downloading / ready / unavailable 状态，切换时由后端统一激活模型。</text>
 
   <g filter="url(#shadow)">
-    <rect x="60" y="150" width="330" height="250" rx="24" fill="#ffffff" stroke="#2563eb" stroke-width="3"/>
-    <text x="90" y="205" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#0f172a">基础版 Pix2Tex</text>
-    <text x="90" y="242" font-family="Arial, sans-serif" font-size="17" fill="#475569">速度极快，CPU 友好</text>
-    <text x="90" y="276" font-family="Arial, sans-serif" font-size="17" fill="#475569">适合清晰单行公式</text>
-    <rect x="90" y="318" width="110" height="34" rx="17" fill="#2563eb"/>
-    <text x="120" y="341" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#fff">当前使用</text>
+    <rect x="50" y="140" width="340" height="360" rx="22" fill="#fff" stroke="#2563eb" stroke-width="3"/>
+    <circle cx="82" cy="178" r="10" fill="#22c55e"/>
+    <text x="104" y="186" class="card-title">基础版 Pix2Tex</text>
+    <rect x="72" y="216" width="106" height="28" rx="14" fill="#dcfce7"/>
+    <text x="90" y="235" class="tag" fill="#166534">&lt; 2GB VRAM</text>
+    <text x="72" y="282" class="small">速度极快，支持 CPU 运行。</text>
+    <text x="72" y="306" class="small">适合简单单行公式和清晰截图。</text>
+    <line x1="72" y1="334" x2="348" y2="334" stroke="#e2e8f0"/>
+    <text x="72" y="366" class="small">擅长场景</text>
+    <text x="72" y="392" class="small">快速识别、轻量部署、低显存环境</text>
+    <rect x="72" y="430" width="128" height="38" rx="19" fill="#2563eb"/>
+    <text x="100" y="454" class="button" fill="#fff">当前使用</text>
   </g>
 
   <g filter="url(#shadow)">
-    <rect x="435" y="150" width="330" height="250" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-    <text x="465" y="205" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#0f172a">高精度 LaTeX_OCR</text>
-    <text x="465" y="242" font-family="Arial, sans-serif" font-size="17" fill="#475569">独立权重配置后启用</text>
-    <text x="465" y="276" font-family="Arial, sans-serif" font-size="17" fill="#475569">适合上下标、希腊字母</text>
-    <rect x="465" y="318" width="92" height="34" rx="17" fill="#e0f2fe"/>
-    <text x="488" y="341" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#0369a1">可切换</text>
+    <rect x="430" y="140" width="340" height="360" rx="22" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+    <circle cx="462" cy="178" r="10" fill="#3b82f6"/>
+    <text x="484" y="186" class="card-title">高精度 LaTeX_OCR</text>
+    <rect x="452" y="216" width="116" height="28" rx="14" fill="#dbeafe"/>
+    <text x="470" y="235" class="tag" fill="#1e40af">4-6GB VRAM</text>
+    <text x="452" y="282" class="small">准确率提升，推荐 GPU 运行。</text>
+    <text x="452" y="306" class="small">适合上下标、希腊字母和常规复杂公式。</text>
+    <line x1="452" y1="334" x2="728" y2="334" stroke="#e2e8f0"/>
+    <text x="452" y="366" class="small">擅长场景</text>
+    <text x="452" y="392" class="small">教科书公式、论文截图、常规复杂结构</text>
+    <rect x="452" y="430" width="110" height="38" rx="19" fill="#e0f2fe"/>
+    <text x="480" y="454" class="button" fill="#0369a1">可切换</text>
   </g>
 
-  <g filter="url(#shadow)" opacity="0.72">
-    <rect x="810" y="150" width="330" height="250" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-    <text x="840" y="205" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#0f172a">专业版 Uni-Equation</text>
-    <text x="840" y="242" font-family="Arial, sans-serif" font-size="17" fill="#475569">复杂公式、多层矩阵</text>
-    <text x="840" y="276" font-family="Arial, sans-serif" font-size="17" fill="#475569">需配置模型来源与大显存</text>
-    <rect x="840" y="318" width="92" height="34" rx="17" fill="#f1f5f9"/>
-    <text x="863" y="341" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#64748b">未启用</text>
+  <g filter="url(#shadow)" opacity="0.74">
+    <rect x="810" y="140" width="340" height="360" rx="22" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+    <circle cx="842" cy="178" r="10" fill="#94a3b8"/>
+    <text x="864" y="186" class="card-title">专业版 Uni-Equation</text>
+    <rect x="832" y="216" width="112" height="28" rx="14" fill="#fef3c7"/>
+    <text x="850" y="235" class="tag" fill="#92400e">&gt; 8GB VRAM</text>
+    <text x="832" y="282" class="small">复杂结构克星，大显存环境推荐。</text>
+    <text x="832" y="306" class="small">面向大型矩阵、多层分式和长公式。</text>
+    <line x1="832" y1="334" x2="1108" y2="334" stroke="#e2e8f0"/>
+    <text x="832" y="366" class="small">擅长场景</text>
+    <text x="832" y="392" class="small">物理/化学长公式、嵌套结构、矩阵</text>
+    <rect x="832" y="430" width="110" height="38" rx="19" fill="#f1f5f9"/>
+    <text x="860" y="454" class="button" fill="#64748b">未启用</text>
   </g>
+
+  <rect x="52" y="540" width="1096" height="54" rx="18" fill="#fff" stroke="#e2e8f0"/>
+  <text x="78" y="574" class="muted" font-size="15">状态同步：ready 可点击 · downloading 显示进度条 · unavailable 置灰提示配置缺失</text>
 </svg>

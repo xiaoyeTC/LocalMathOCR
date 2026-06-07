@@ -1,42 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="460" viewBox="0 0 1200 460">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="560" viewBox="0 0 1280 560">
   <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/>
-    </marker>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#f8fafc"/><stop offset="1" stop-color="#eef2ff"/></linearGradient>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M1,1 L11,6 L1,11 Z" fill="#2563eb"/></marker>
+    <style>.t{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#0f172a;font-weight:800}.m{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#64748b}.n{font-family:Arial,'Microsoft YaHei',sans-serif;font-size:15px;font-weight:800}.s{font-family:Arial,'Microsoft YaHei',sans-serif;font-size:13px;fill:#64748b}</style>
   </defs>
-  <rect width="1200" height="460" rx="32" fill="#f8fafc"/>
-  <text x="60" y="70" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="#0f172a">模型生命周期管理</text>
-  <text x="60" y="106" font-family="Arial, sans-serif" font-size="18" fill="#475569">下载、加载、热切换、显存释放与 SSE 状态推送统一由 ModelManager 管理</text>
+  <rect width="1280" height="560" rx="30" fill="url(#bg)"/>
+  <text x="54" y="62" class="t" font-size="32">Model Lifecycle Manager</text>
+  <text x="54" y="94" class="m" font-size="16">统一负责模型配置、自动下载、显存热切换、并发锁和 SSE 状态广播。</text>
 
-  <g font-family="Arial, sans-serif" font-size="18" font-weight="700">
-    <rect x="70" y="180" width="170" height="78" rx="18" fill="#dbeafe" stroke="#2563eb"/>
-    <text x="112" y="228" fill="#1e3a8a">配置启用</text>
-
-    <rect x="305" y="180" width="170" height="78" rx="18" fill="#fef3c7" stroke="#d97706"/>
-    <text x="345" y="228" fill="#92400e">下载权重</text>
-
-    <rect x="540" y="180" width="170" height="78" rx="18" fill="#dcfce7" stroke="#16a34a"/>
-    <text x="581" y="228" fill="#166534">加载显存</text>
-
-    <rect x="775" y="180" width="170" height="78" rx="18" fill="#ede9fe" stroke="#7c3aed"/>
-    <text x="820" y="228" fill="#5b21b6">激活模型</text>
-
-    <rect x="1010" y="180" width="170" height="78" rx="18" fill="#fee2e2" stroke="#dc2626"/>
-    <text x="1044" y="228" fill="#991b1b">释放旧模型</text>
+  <g>
+    <rect x="64" y="150" width="160" height="86" rx="18" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+    <text x="104" y="186" class="n" fill="#1e3a8a">配置启用</text><text x="92" y="212" class="s">ENABLE_* / .env</text>
+    <rect x="306" y="150" width="160" height="86" rx="18" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+    <text x="346" y="186" class="n" fill="#92400e">自动下载</text><text x="330" y="212" class="s">权重缺失时触发</text>
+    <rect x="548" y="150" width="160" height="86" rx="18" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="588" y="186" class="n" fill="#166534">加载模型</text><text x="572" y="212" class="s">asyncio.Lock 保护</text>
+    <rect x="790" y="150" width="160" height="86" rx="18" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+    <text x="830" y="186" class="n" fill="#5b21b6">激活推理</text><text x="818" y="212" class="s">active_model_id</text>
+    <rect x="1032" y="150" width="160" height="86" rx="18" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+    <text x="1072" y="186" class="n" fill="#991b1b">释放显存</text><text x="1052" y="212" class="s">gc + empty_cache</text>
   </g>
 
-  <g stroke="#2563eb" stroke-width="4" marker-end="url(#arrow)">
-    <line x1="240" y1="219" x2="294" y2="219"/>
-    <line x1="475" y1="219" x2="529" y2="219"/>
-    <line x1="710" y1="219" x2="764" y2="219"/>
-    <line x1="945" y1="219" x2="999" y2="219"/>
+  <g stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)">
+    <line x1="224" y1="193" x2="296" y2="193"/><line x1="466" y1="193" x2="538" y2="193"/><line x1="708" y1="193" x2="780" y2="193"/><line x1="950" y1="193" x2="1022" y2="193"/>
   </g>
 
-  <g font-family="Arial, sans-serif" font-size="16" fill="#334155">
-    <text x="80" y="320">PRELOAD_MODELS / ENABLE_* / CHECKPOINT</text>
-    <text x="315" y="320">SSE 推送 downloading + progress</text>
-    <text x="548" y="320">asyncio.Lock 防止并发切换</text>
-    <text x="785" y="320">active_model_id 全局唯一</text>
-    <text x="1000" y="320">gc.collect + cuda.empty_cache</text>
-  </g>
+  <rect x="64" y="306" width="1192" height="150" rx="22" fill="#fff" stroke="#e2e8f0"/>
+  <text x="92" y="346" class="t" font-size="20">运行保障</text>
+  <text x="92" y="382" class="m" font-size="15">1. 切换模型时串行执行：加载新模型 → 更新 active_model_id → 卸载旧模型。</text>
+  <text x="92" y="412" class="m" font-size="15">2. 推理请求通过 predict lock 排队，避免模型指针释放期间继续使用旧实例。</text>
+  <text x="92" y="442" class="m" font-size="15">3. 前端通过 SSE 直接感知下载进度和可用状态，避免前后端状态漂移。</text>
+
+  <rect x="64" y="482" width="1192" height="42" rx="16" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="92" y="508" class="m" font-size="14">同一时刻默认只保留一个大模型在显存中，降低 OOM 风险。</text>
 </svg>

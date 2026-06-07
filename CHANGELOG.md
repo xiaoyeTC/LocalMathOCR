@@ -1,5 +1,79 @@
 # 更新日志
 
+## [2.0.0] - 2026-06-07
+
+LocalMathOCR 2.0.0 是一次正式的大版本更新，重点完成多模型 OCR 架构、模型生命周期管理、前后端状态同步、导出字体体验与项目文档展示升级。
+
+### 新增
+
+#### 多模型 OCR 架构
+- 新增 `ModelManager` 模型生命周期管理器，统一管理模型注册、权重检查、自动下载、懒加载、热切换与卸载。
+- 新增 Pix2Tex、LaTeX_OCR、Uni-Equation 三种模型配置入口。
+- 新增模型元数据定义，包含显示名称、特点说明、显存需求与擅长场景。
+- 新增 `GET /api/models`，用于返回模型列表、状态、进度和当前激活模型。
+- 新增 `GET /api/models/events`，通过 SSE 实时推送模型状态。
+- 新增 `POST /api/models/{model_id}/activate`，支持前端主动切换当前模型。
+- 新增 `POST /api/ocr`，支持通过 `model_id` 指定单次推理模型。
+
+#### 模型下载与配置
+- 支持 `PRELOAD_MODELS` 配置启动时需要初始化的模型列表。
+- 支持缺失权重时自动下载模型文件。
+- 支持通过 Hugging Face 仓库或本地 checkpoint 配置 LaTeX_OCR。
+- 支持通过 Hugging Face 仓库、模型名或本地目录配置 Uni-Equation。
+- 未配置独立权重的 LaTeX_OCR 不再复用 Pix2Tex 权重，避免误判模型已切换。
+
+#### 前端模型选择
+- 新增模型选择卡片 UI，展示 Pix2Tex、LaTeX_OCR、Uni-Equation 的状态、描述、显存需求和适用场景。
+- `ready` 状态可点击切换，`downloading` 状态显示下载/加载进度，`unavailable` 状态置灰并提示配置缺失。
+- 前端点击模型时会调用后端激活接口，确保 UI 选择与实际推理模型一致。
+
+#### 导出与字体
+- 新增公式导出字体选择能力。
+- 默认字体改为 `Times New Roman`。
+- 支持 Cambria Math、STIX Two Math、Latin Modern Math、Georgia、Arial 等字体选项。
+- PNG / SVG 导出时同步覆盖 KaTeX 内部字体，保证预览和导出一致。
+
+#### 文档与展示
+- 更新 README 项目预览区。
+- 新增/优化主界面 SVG 截图。
+- 新增/优化导出与字体选择 SVG 截图。
+- 优化模型选择与状态同步 SVG 排版。
+- 优化模型生命周期管理 SVG 排版，修复底部文字重叠问题。
+- 新增正式版 GitHub Release 文案文件。
+
+### 修复
+- 修复前端切换模型后，后端实际推理仍使用旧模型的问题。
+- 修复模型加载/卸载过程中缺少并发锁导致的状态漂移风险。
+- 修复 LaTeX_OCR 未配置独立权重时误显示为可用的问题。
+- 修复公式预览与导出默认字体看似设置为 Times New Roman、实际仍被 KaTeX 字体覆盖的问题。
+- 修复文档 SVG 图底部文字重叠、排版拥挤的问题。
+
+### 优化
+- 默认仅预热轻量 Pix2Tex，降低启动显存压力。
+- 切换模型后自动卸载旧模型并触发显存清理。
+- 模型状态通过 SSE 推送，减少前端轮询和状态不同步问题。
+- README 补充 LaTeX_OCR 与 Uni-Equation 的真实启用方式和验证方法。
+
+### 配置
+
+新增或完善以下环境变量：
+- `PRELOAD_MODELS`
+- `ENABLE_PIX2TEX`
+- `ENABLE_LATEX_OCR`
+- `ENABLE_UNI_EQUATION`
+- `LATEX_OCR_CHECKPOINT`
+- `LATEX_OCR_REPO_ID`
+- `UNI_EQUATION_REPO_ID`
+- `UNI_EQUATION_MODEL_NAME`
+- `UNI_EQUATION_CHECKPOINT`
+- `MAX_LOADED_MODELS`
+- `MODEL_DOWNLOAD_TIMEOUT_SEC`
+
+### 依赖
+- 新增 `transformers>=4.45.0`
+- 新增 `accelerate>=0.34.0`
+- 新增 `huggingface_hub>=0.26.0`
+
 ## [1.1.0] - 2026-06-07
 
 ### 新增

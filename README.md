@@ -21,11 +21,11 @@
 
 ### 主界面
 
-![LocalMathOCR 主界面](docs/preview-main.png)
+![LocalMathOCR 主界面](docs/preview-main.svg)
 
 ### 导出与字体选择
 
-![LocalMathOCR 导出与字体选择](docs/preview-export.png)
+![LocalMathOCR 导出与字体选择](docs/preview-export.svg)
 
 ### 模型选择与状态同步
 
@@ -437,8 +437,8 @@ LocalMathOCR/
 │  ├─ index.html
 │  └─ package.json
 ├─ docs/
-│  ├─ preview-main.png
-│  ├─ preview-export.png
+│  ├─ preview-main.svg
+│  ├─ preview-export.svg
 │  ├─ preview-model-selector.svg
 │  └─ model-lifecycle.svg
 ├─ start.bat
