@@ -277,7 +277,7 @@ class LatexOCREngine(BaseOCREngine):
             return Path(self.checkpoint).expanduser().exists()
         if self.repo_id:
             return self._repo_weights_path().exists()
-        return False
+        return self._pix2tex_weights_path().exists()
 
     def download_sync(self, progress_cb: ProgressCallback | None = None) -> None:
         if self.checkpoint:
@@ -296,14 +296,20 @@ class LatexOCREngine(BaseOCREngine):
             if progress_cb:
                 progress_cb(100, "latex_ocr snapshot downloaded")
             return
-        raise RuntimeError("LaTeX_OCR requires LATEX_OCR_CHECKPOINT or LATEX_OCR_REPO_ID.")
+        if self._pix2tex_weights_path().exists():
+            if progress_cb:
+                progress_cb(100, "using built-in pix2tex weights")
+            return
+        raise RuntimeError("LaTeX_OCR weights not found")
 
     def load_sync(self) -> None:
         if not self.checkpoint and self.repo_id and self._repo_weights_path().exists():
             self.checkpoint = str(self._repo_weights_path())
+        if not self.checkpoint and self._pix2tex_weights_path().exists():
+            self.checkpoint = str(self._pix2tex_weights_path())
         if not self.checkpoint:
             self.status = "error"
-            self.message = "LaTeX_OCR requires independent weights: set LATEX_OCR_CHECKPOINT or LATEX_OCR_REPO_ID"
+            self.message = "LaTeX_OCR weights not found"
             self._model = None
             return
         self.status = "loading"

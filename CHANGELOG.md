@@ -4,6 +4,11 @@
 
 ### 优化
 
+#### 模型启动条件简化
+- LaTeX_OCR 现在只需 `ENABLE_LATEX_OCR=true` 即可启用，使用 pix2tex 包内置权重，无需额外配置 `LATEX_OCR_CHECKPOINT` 或 `LATEX_OCR_REPO_ID`。
+- Uni-Equation 设置默认模型 `anonymous945/Uni-MER`，只需 `ENABLE_UNI_EQUATION=true` 即可启用，首次启动自动下载。
+- 移除模型注册时的配置检查限制，`enable_*` 标志即为唯一启用条件。
+
 #### 模型下载与进度管理
 - 重构三个引擎（Pix2Text、LaTeX_OCR、Uni-Equation）的下载逻辑，统一为「检查已下载 → 下载 → 加载」三阶段流程。
 - 已下载的模型自动跳过下载步骤，直接进入加载阶段。

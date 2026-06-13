@@ -215,9 +215,11 @@ npm run dev
 | `ENABLE_PIX2TEXT` | `true` | 是否启用基础版 Pix2Text |
 | `ENABLE_LATEX_OCR` | `true` | 是否启用高精度版 LaTeX_OCR |
 | `ENABLE_UNI_EQUATION` | `false` | 是否启用专业版 Uni-Equation，大显存环境建议手动开启 |
-| `LATEX_OCR_CHECKPOINT` | 空 | 高精度版权重路径；不配置时高精度版会显示为未配置，不再复用 Pix2Text 权重 |
-| `UNI_EQUATION_MODEL_NAME` | 空 | Uni-Equation Hugging Face 模型名 |
+| `LATEX_OCR_CHECKPOINT` | 空 | 高精度版本地权重路径（可选，不配置时使用 pix2tex 包内置权重） |
+| `LATEX_OCR_REPO_ID` | 空 | 高精度版 Hugging Face 仓库 ID（可选） |
+| `UNI_EQUATION_MODEL_NAME` | `anonymous945/Uni-MER` | Uni-Equation Hugging Face 模型名 |
 | `UNI_EQUATION_CHECKPOINT` | 空 | Uni-Equation 本地权重/模型目录，优先级高于模型名 |
+| `UNI_EQUATION_REPO_ID` | 空 | Uni-Equation Hugging Face 仓库 ID（可选） |
 | `MAX_LOADED_MODELS` | `1` | 同时保留在显存/内存中的模型数量，超过后自动卸载旧模型 |
 | `PRELOAD_MODELS` | `pix2text` | 启动时检查/下载的模型列表，逗号分隔，如 `pix2text,latex_ocr` |
 | `PIX2TEX_WEIGHTS_URL` | pix2tex release 地址 | 高精度版 LaTeX_OCR 权重自动下载地址（仅 LaTeX_OCR 使用） |
@@ -227,169 +229,44 @@ npm run dev
 | `P2T_MFR_MODEL` | `mfr-1.5` | Pix2Text 公式识别模型版本 |
 | `HF_ENDPOINT` | 空 | HuggingFace 镜像地址，国内用户建议设为 `https://hf-mirror.com` |
 
-### 如何真正启用 LaTeX_OCR
+### 如何启用 LaTeX_OCR
 
-`LaTeX_OCR` 必须配置独立权重才会启用；如果未配置，前端会显示“未配置独立权重”，不会复用 Pix2Text 权重，避免误以为模型已切换。
+`LaTeX_OCR` 默认启用（`ENABLE_LATEX_OCR=true`），使用 pix2tex 包内置权重，无需额外配置。
 
-#### 方式一：使用本地权重
-
-将高精度版权重放到本地，例如：
-
-```text
-backend/models/latex_ocr/weights.pth
-```
-
-然后在后端 `.env` 中配置：
+如需使用自定义权重，可在 `.env` 中指定：
 
 ```env
-ENABLE_LATEX_OCR=true
 LATEX_OCR_CHECKPOINT=./models/latex_ocr/weights.pth
-PRELOAD_MODELS=pix2text,latex_ocr
 ```
 
-#### 方式二：使用 Hugging Face 仓库
-
-如果你有可用的 LaTeX_OCR 权重仓库，配置：
+或从 Hugging Face 仓库下载：
 
 ```env
-ENABLE_LATEX_OCR=true
 LATEX_OCR_REPO_ID=your-org/your-latex-ocr-model
-PRELOAD_MODELS=pix2text,latex_ocr
 ```
 
-> 当前加载器默认在仓库或目录中查找 `weights.pth`。如果你的仓库文件名不同，请改为使用 `LATEX_OCR_CHECKPOINT` 指向实际文件。
+### 如何启用 Uni-Equation
 
-#### 验证 LaTeX_OCR 是否真的生效
+`Uni-Equation` 默认关闭（`ENABLE_UNI_EQUATION=false`），显存建议 `>8GB`。
 
-1. 启动后访问：
-
-```text
-http://127.0.0.1:8000/api/models
-```
-
-确认 `latex_ocr` 是：
-
-```json
-{
-  "id": "latex_ocr",
-  "status": "ready",
-  "active": false
-}
-```
-
-如果看到：
-
-```json
-{
-  "id": "latex_ocr",
-  "status": "unavailable",
-  "message": "未配置独立权重"
-}
-```
-
-说明高精度版还没有配置成功。
-
-2. 在前端点击 LaTeX_OCR 后，再识别一张图片，接口返回中应包含：
-
-```json
-{
-  "model_id": "latex_ocr"
-}
-```
-
-如果返回的是：
-
-```json
-{
-  "model_id": "pix2text"
-}
-```
-
-说明实际推理仍然走的是基础版。
-
-3. 也可以直接调用切换接口验证：
-
-```bash
-curl -X POST http://127.0.0.1:8000/api/models/latex_ocr/activate
-```
-
-成功后再次访问 `/api/models`，应看到：
-
-```json
-{
-  "active_model_id": "latex_ocr"
-}
-```
-
-### 如何启用专业版 Uni-Equation
-
-`Uni-Equation` 面向多层嵌套分数、大型矩阵、物理/化学长公式等复杂场景，显存建议 `>8GB`。默认关闭，避免普通 CPU/低显存设备启动时误下载大模型或 OOM。
-
-#### 方式一：使用 Hugging Face 仓库
-
-在后端 `.env` 中配置：
+在后端 `.env` 中配置即可启用：
 
 ```env
 ENABLE_UNI_EQUATION=true
-UNI_EQUATION_REPO_ID=your-org/your-uni-equation-model
-PRELOAD_MODELS=pix2text,uni_equation
 ```
 
-如果仓库名就是可直接加载的模型名，也可以使用：
+首次启动时会自动从 HuggingFace 下载默认模型 `anonymous945/Uni-MER`。国内用户建议设置 `HF_ENDPOINT=https://hf-mirror.com`。
+
+如需使用自定义模型：
 
 ```env
-ENABLE_UNI_EQUATION=true
-UNI_EQUATION_MODEL_NAME=your-org/your-uni-equation-model
-PRELOAD_MODELS=pix2text,uni_equation
+UNI_EQUATION_MODEL_NAME=your-org/your-model
 ```
 
-#### 方式二：使用本地模型目录
-
-将模型文件放到本地目录，例如：
-
-```text
-backend/models/uni_equation/
-```
-
-然后配置：
+或使用本地模型目录：
 
 ```env
-ENABLE_UNI_EQUATION=true
 UNI_EQUATION_CHECKPOINT=./models/uni_equation
-PRELOAD_MODELS=pix2text,uni_equation
-```
-
-#### 验证 Uni-Equation 是否生效
-
-启动后访问：
-
-```text
-http://127.0.0.1:8000/api/models
-```
-
-确认 `uni_equation` 是：
-
-```json
-{
-  "id": "uni_equation",
-  "status": "ready"
-}
-```
-
-前端点击专业版后，识别接口返回中应包含：
-
-```json
-{
-  "model_id": "uni_equation"
-}
-```
-
-如果看到 `unavailable`，请检查是否配置了以下任意一项：
-
-```env
-UNI_EQUATION_REPO_ID=...
-UNI_EQUATION_MODEL_NAME=...
-UNI_EQUATION_CHECKPOINT=...
 ```
 
 ### 字体与导出说明

@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     enable_latex_ocr: bool = True
     enable_uni_equation: bool = False
     latex_ocr_checkpoint: Path | None = None
-    uni_equation_model_name: str | None = None
+    uni_equation_model_name: str = "anonymous945/Uni-MER"
     uni_equation_checkpoint: str | None = None
     max_loaded_models: int = Field(default=1, ge=1)
     preload_models: str = "pix2text"

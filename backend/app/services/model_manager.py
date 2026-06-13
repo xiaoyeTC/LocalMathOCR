@@ -72,11 +72,9 @@ class ModelManager:
                 vram_requirement="4GB - 6GB",
                 strengths=["上下标", "希腊字母", "常规复杂公式", "GPU 推荐"],
             ),
-            enabled=self.settings.enable_latex_ocr and bool(self.settings.latex_ocr_checkpoint or self.settings.latex_ocr_repo_id),
+            enabled=self.settings.enable_latex_ocr,
             factory=lambda: LatexOCREngine(),
         )
-        if self.settings.enable_latex_ocr and not (self.settings.latex_ocr_checkpoint or self.settings.latex_ocr_repo_id):
-            self._runtimes["latex_ocr"].message = "未配置独立权重：请设置 LATEX_OCR_CHECKPOINT 或 LATEX_OCR_REPO_ID"
         self.register(
             ModelMetadata(
                 id="uni_equation",
@@ -85,15 +83,9 @@ class ModelManager:
                 vram_requirement=">8GB",
                 strengths=["嵌套分数", "大型矩阵", "长公式", "物理/化学公式"],
             ),
-            enabled=self.settings.enable_uni_equation and bool(
-                self.settings.uni_equation_checkpoint or self.settings.uni_equation_repo_id or self.settings.uni_equation_model_name
-            ),
+            enabled=self.settings.enable_uni_equation,
             factory=lambda: UniEquationEngine(),
         )
-        if self.settings.enable_uni_equation and not (
-            self.settings.uni_equation_checkpoint or self.settings.uni_equation_repo_id or self.settings.uni_equation_model_name
-        ):
-            self._runtimes["uni_equation"].message = "未配置模型来源：请设置 UNI_EQUATION_CHECKPOINT、UNI_EQUATION_REPO_ID 或 UNI_EQUATION_MODEL_NAME"
 
     def register(self, metadata: ModelMetadata, enabled: bool, factory: Callable[[], BaseOCREngine]) -> None:
         self._runtimes[metadata.id] = ModelRuntime(
