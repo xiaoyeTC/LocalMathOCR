@@ -10,7 +10,7 @@ from app.services.preprocess import enhance_formula_image, make_thumbnail_data_u
 router = APIRouter(prefix="/api", tags=["ocr"])
 
 
-FALLBACK_MODEL_ID = "pix2tex"
+FALLBACK_MODEL_ID = "pix2text"
 
 
 def _brace_delta(latex: str) -> int:

@@ -3,7 +3,6 @@ import gc
 import math
 import os
 import time
-import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Literal
@@ -129,15 +128,78 @@ class BaseOCREngine:
             pass
 
 
-class Pix2TexEngine(BaseOCREngine):
-    def __init__(self, model_id: str = "pix2tex", checkpoint: str | None = None) -> None:
+class Pix2TextEngine(BaseOCREngine):
+    def __init__(self, model_id: str = "pix2text") -> None:
         super().__init__(model_id=model_id)
-        self.checkpoint = checkpoint
+
+    def _p2t_model_dir(self) -> Path:
+        return Path.home() / ".pix2text"
+
+    def weights_exist(self) -> bool:
+        model_dir = self._p2t_model_dir()
+        if not model_dir.exists():
+            return False
+        return any(model_dir.rglob("*.onnx"))
+
+    def load_sync(self) -> None:
+        self.status = "loading"
+        self.message = "model is loading"
+        try:
+            self.device = self._resolve_device()
+            from pix2text import Pix2Text
+
+            total_config = {
+                'text_formula': {
+                    'formula': {
+                        'model_name': self.settings.p2t_mfr_model,
+                        'model_backend': 'onnx',
+                    },
+                },
+            }
+            self._model = Pix2Text.from_config(
+                total_configs=total_config,
+                enable_table=False,
+                device='cpu' if self.device == 'cpu' else self.device,
+            )
+            self.status = "ready"
+            self.message = f"{self.model_id} loaded on {self.device}"
+        except Exception as exc:
+            self.status = "error"
+            self.message = str(exc)
+            self._model = None
+
+    def _predict_sync(self, image: Image.Image, variant: str = "default") -> OCRPrediction:
+        import tempfile
+
+        started = time.perf_counter()
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                image.save(tmp, format="PNG")
+                tmp_path = tmp.name
+            try:
+                result = self._model.recognize_formula(tmp_path)
+            finally:
+                os.unlink(tmp_path)
+            latex = result if isinstance(result, str) else str(result)
+            return OCRPrediction(
+                latex=latex.strip(),
+                inference_time_ms=int((time.perf_counter() - started) * 1000),
+                variant=variant,
+            )
+        finally:
+            gc.collect()
+
+
+class LatexOCREngine(BaseOCREngine):
+    def __init__(self) -> None:
+        super().__init__(model_id="latex_ocr")
+        settings = get_settings()
+        self.checkpoint = str(settings.latex_ocr_checkpoint) if settings.latex_ocr_checkpoint else None
+        self.repo_id = settings.latex_ocr_repo_id
         self._no_resize = True
 
     def _pix2tex_package_root(self) -> Path:
         import pix2tex
-
         return Path(pix2tex.__file__).resolve().parent / "model"
 
     def _pix2tex_weights_path(self) -> Path:
@@ -153,128 +215,6 @@ class Pix2TexEngine(BaseOCREngine):
         if weights_path == default_path:
             return "checkpoints/weights.pth"
         return str(weights_path)
-
-    def weights_exist(self) -> bool:
-        return self._pix2tex_weights_path().exists()
-
-    def download_sync(self, progress_cb: ProgressCallback | None = None) -> None:
-        weights_path = self._pix2tex_weights_path()
-        weights_path.parent.mkdir(parents=True, exist_ok=True)
-        if weights_path.exists():
-            if progress_cb:
-                progress_cb(100, f"{self.model_id} weights already exist")
-            return
-
-        url = self.settings.pix2tex_weights_url
-
-        def report(block_count: int, block_size: int, total_size: int) -> None:
-            if not progress_cb or total_size <= 0:
-                return
-            percent = min(99, int(block_count * block_size * 100 / total_size))
-            progress_cb(percent, f"downloading {self.model_id} weights")
-
-        if progress_cb:
-            progress_cb(1, f"start downloading {self.model_id} weights")
-        urllib.request.urlretrieve(url, weights_path, reporthook=report)
-        if progress_cb:
-            progress_cb(100, f"{self.model_id} weights downloaded")
-
-    def _missing_model_message(self, weights_path: Path) -> str:
-        return (
-            f"{self.model_id} model file is missing. "
-            f"Expected weights at: {weights_path}. "
-            "Please configure a valid checkpoint or allow automatic download."
-        )
-
-    def load_sync(self) -> None:
-        self.status = "loading"
-        self.message = "model is loading"
-        try:
-            self.device = self._resolve_device()
-            os.environ.setdefault("TORCH_HOME", str(self.settings.model_dir))
-            from munch import Munch
-            from pix2tex.cli import LatexOCR
-
-            weights_path = self._pix2tex_weights_path()
-            if not weights_path.exists():
-                raise FileNotFoundError(self._missing_model_message(weights_path))
-
-            resizer_path = self._pix2tex_resizer_path()
-            self._no_resize = not resizer_path.exists()
-            args = Munch({
-                "config": "settings/config.yaml",
-                "checkpoint": self._checkpoint_arg(weights_path),
-                "no_cuda": self.device == "cpu",
-                "no_resize": self._no_resize,
-            })
-            self._model = LatexOCR(args)
-            self.status = "ready"
-            if self._no_resize:
-                self.message = f"{self.model_id} loaded on {self.device}; image_resizer disabled"
-            else:
-                self.message = f"{self.model_id} loaded on {self.device}; image_resizer enabled"
-        except Exception as exc:
-            self.status = "error"
-            self.message = str(exc)
-            self._model = None
-
-    def _fallback_resize_and_pad(self, image: Image.Image) -> Image.Image:
-        max_w, max_h = 672, 192
-        try:
-            cfg = getattr(self._model, "args", None)
-            if cfg is not None:
-                dims = getattr(cfg, "max_dimensions", None)
-                if dims is not None:
-                    max_w, max_h = int(dims[1]), int(dims[0])
-        except Exception:
-            pass
-
-        w, h = image.size
-        if w == 0 or h == 0:
-            return image
-
-        ratio = min(max_w / w, max_h / h)
-        if ratio < 1:
-            new_w, new_h = math.floor(w * ratio), math.floor(h * ratio)
-        else:
-            new_w, new_h = w, h
-        image = image.resize((new_w, new_h), Image.Resampling.LANCZOS)
-
-        canvas = Image.new("RGB", (max_w, max_h), "white")
-        canvas.paste(image, ((max_w - new_w) // 2, (max_h - new_h) // 2))
-        return canvas
-
-    def _predict_sync(self, image: Image.Image, variant: str = "default") -> OCRPrediction:
-        started = time.perf_counter()
-        try:
-            model_input = image
-            if self._no_resize and self._model is not None:
-                model_input = self._fallback_resize_and_pad(image)
-            latex = self._model(model_input)
-            if isinstance(latex, (list, tuple)):
-                latex = latex[0]
-            return OCRPrediction(
-                latex=str(latex).strip(),
-                inference_time_ms=int((time.perf_counter() - started) * 1000),
-                variant=variant,
-            )
-        finally:
-            gc.collect()
-            try:
-                import torch
-
-                if self.device == "cuda" and torch.cuda.is_available():
-                    torch.cuda.empty_cache()
-            except Exception:
-                pass
-
-
-class LatexOCREngine(Pix2TexEngine):
-    def __init__(self) -> None:
-        settings = get_settings()
-        checkpoint = str(settings.latex_ocr_checkpoint) if settings.latex_ocr_checkpoint else None
-        super().__init__(model_id="latex_ocr", checkpoint=checkpoint)
-        self.repo_id = settings.latex_ocr_repo_id
 
     def _repo_dir(self) -> Path:
         return self.settings.model_dir / "latex_ocr"
@@ -300,7 +240,6 @@ class LatexOCREngine(Pix2TexEngine):
             if progress_cb:
                 progress_cb(5, "downloading latex_ocr snapshot")
             from huggingface_hub import snapshot_download
-
             snapshot_download(repo_id=self.repo_id, local_dir=str(self._repo_dir()), local_dir_use_symlinks=False)
             if not self._repo_weights_path().exists():
                 raise FileNotFoundError(f"latex_ocr snapshot downloaded but weights.pth was not found in {self._repo_dir()}")
@@ -308,7 +247,7 @@ class LatexOCREngine(Pix2TexEngine):
             if progress_cb:
                 progress_cb(100, "latex_ocr snapshot downloaded")
             return
-        raise RuntimeError("LaTeX_OCR requires LATEX_OCR_CHECKPOINT or LATEX_OCR_REPO_ID. It will not reuse pix2tex weights.")
+        raise RuntimeError("LaTeX_OCR requires LATEX_OCR_CHECKPOINT or LATEX_OCR_REPO_ID.")
 
     def load_sync(self) -> None:
         if not self.checkpoint and self.repo_id and self._repo_weights_path().exists():
@@ -318,7 +257,79 @@ class LatexOCREngine(Pix2TexEngine):
             self.message = "LaTeX_OCR requires independent weights: set LATEX_OCR_CHECKPOINT or LATEX_OCR_REPO_ID"
             self._model = None
             return
-        super().load_sync()
+        self.status = "loading"
+        self.message = "model is loading"
+        try:
+            self.device = self._resolve_device()
+            os.environ.setdefault("TORCH_HOME", str(self.settings.model_dir))
+            from munch import Munch
+            from pix2tex.cli import LatexOCR
+
+            weights_path = self._pix2tex_weights_path()
+            if not weights_path.exists():
+                raise FileNotFoundError(f"LaTeX_OCR weights not found at: {weights_path}")
+
+            resizer_path = self._pix2tex_resizer_path()
+            self._no_resize = not resizer_path.exists()
+            args = Munch({
+                "config": "settings/config.yaml",
+                "checkpoint": self._checkpoint_arg(weights_path),
+                "no_cuda": self.device == "cpu",
+                "no_resize": self._no_resize,
+            })
+            self._model = LatexOCR(args)
+            self.status = "ready"
+            self.message = f"latex_ocr loaded on {self.device}"
+        except Exception as exc:
+            self.status = "error"
+            self.message = str(exc)
+            self._model = None
+
+    def _fallback_resize_and_pad(self, image: Image.Image) -> Image.Image:
+        max_w, max_h = 672, 192
+        try:
+            cfg = getattr(self._model, "args", None)
+            if cfg is not None:
+                dims = getattr(cfg, "max_dimensions", None)
+                if dims is not None:
+                    max_w, max_h = int(dims[1]), int(dims[0])
+        except Exception:
+            pass
+        w, h = image.size
+        if w == 0 or h == 0:
+            return image
+        ratio = min(max_w / w, max_h / h)
+        if ratio < 1:
+            new_w, new_h = math.floor(w * ratio), math.floor(h * ratio)
+        else:
+            new_w, new_h = w, h
+        image = image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+        canvas = Image.new("RGB", (max_w, max_h), "white")
+        canvas.paste(image, ((max_w - new_w) // 2, (max_h - new_h) // 2))
+        return canvas
+
+    def _predict_sync(self, image: Image.Image, variant: str = "default") -> OCRPrediction:
+        started = time.perf_counter()
+        try:
+            model_input = image
+            if self._no_resize and self._model is not None:
+                model_input = self._fallback_resize_and_pad(image)
+            latex = self._model(model_input)
+            if isinstance(latex, (list, tuple)):
+                latex = latex[0]
+            return OCRPrediction(
+                latex=str(latex).strip(),
+                inference_time_ms=int((time.perf_counter() - started) * 1000),
+                variant=variant,
+            )
+        finally:
+            gc.collect()
+            try:
+                import torch
+                if self.device == "cuda" and torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            except Exception:
+                pass
 
 
 class UniEquationEngine(BaseOCREngine):

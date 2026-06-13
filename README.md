@@ -4,7 +4,7 @@
 
 **完全本地运行的数学公式 OCR Web 应用**
 
-前端使用 **React + TypeScript + Vite**，后端使用 **FastAPI + pix2tex**，在本机 CPU / GPU 上完成公式图片到 LaTeX 的识别、编辑、预览与导出。
+前端使用 **React + TypeScript + Vite**，后端使用 **FastAPI + Pix2Text**，在本机 CPU / GPU 上完成公式图片到 LaTeX 的识别、编辑、预览与导出。
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -40,7 +40,7 @@
 ## 核心特性
 
 - **全本地识别**：不依赖外部付费 OCR API，公式识别在本机完成
-- **多模型动态切换**：支持 Pix2Tex、LaTeX_OCR、Uni-Equation 的启用、下载、热切换与状态同步
+- **多模型动态切换**：支持 Pix2Text、LaTeX_OCR、Uni-Equation 的启用、下载、热切换与状态同步
 - **CPU / GPU 自动适配**：支持自动检测 CUDA，也可手动切换运行模式
 - **图片预处理**：灰度化、二值化、去白边、放大、倾斜校正，提升识别稳定性
 - **拖拽 / 上传 / 剪贴板粘贴**：支持 JPG、PNG、WebP 直接识别
@@ -65,7 +65,7 @@
 | 实时预览 | 右侧预览区域即时展示最终渲染效果 |
 | 导出 | 可导出 PNG / SVG，并选择导出字体 |
 | 历史记录 | 查看历史识别记录，支持删除与清空 |
-| 模型选择 | 展示 Pix2Tex、LaTeX_OCR、Uni-Equation 的状态、显存需求、特点与切换按钮 |
+| 模型选择 | 展示 Pix2Text、LaTeX_OCR、Uni-Equation 的状态、显存需求、特点与切换按钮 |
 | 模型状态 | 通过 SSE 实时显示 downloading / ready / unavailable 和下载进度 |
 
 ---
@@ -88,7 +88,8 @@
 
 - FastAPI
 - Uvicorn
-- pix2tex
+- pix2text
+- pix2tex（仅 LaTeX_OCR 使用）
 - PyTorch
 - Transformers / Hugging Face Hub（可选，用于 Uni-Equation 等大模型）
 - OpenCV
@@ -139,7 +140,7 @@ start.bat
 - 启动后端与前端窗口
 - 自动打开浏览器访问前端页面
 
-> 首次运行 pix2tex 时可能需要下载或加载模型，请等待页面右上角状态变为 **ready**。
+> 首次运行 Pix2Text 时可能需要下载或加载模型，请等待页面右上角状态变为 **ready**。
 
 ### 3. 停止服务
 
@@ -210,23 +211,24 @@ npm run dev
 | `MODEL_DIR` | `./models` | 模型缓存目录 |
 | `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080,http://127.0.0.1:8080` | 允许跨域来源 |
 | `RETURN_PREPROCESSED_IMAGE` | `true` | 是否返回预处理图片预览 |
-| `DEFAULT_MODEL_ID` | `pix2tex` | 默认模型 ID |
-| `ENABLE_PIX2TEX` | `true` | 是否启用基础版 Pix2Tex |
+| `DEFAULT_MODEL_ID` | `pix2text` | 默认模型 ID |
+| `ENABLE_PIX2TEXT` | `true` | 是否启用基础版 Pix2Text |
 | `ENABLE_LATEX_OCR` | `true` | 是否启用高精度版 LaTeX_OCR |
 | `ENABLE_UNI_EQUATION` | `false` | 是否启用专业版 Uni-Equation，大显存环境建议手动开启 |
-| `LATEX_OCR_CHECKPOINT` | 空 | 高精度版权重路径；不配置时高精度版会显示为未配置，不再复用 pix2tex 权重 |
+| `LATEX_OCR_CHECKPOINT` | 空 | 高精度版权重路径；不配置时高精度版会显示为未配置，不再复用 Pix2Text 权重 |
 | `UNI_EQUATION_MODEL_NAME` | 空 | Uni-Equation Hugging Face 模型名 |
 | `UNI_EQUATION_CHECKPOINT` | 空 | Uni-Equation 本地权重/模型目录，优先级高于模型名 |
 | `MAX_LOADED_MODELS` | `1` | 同时保留在显存/内存中的模型数量，超过后自动卸载旧模型 |
-| `PRELOAD_MODELS` | `pix2tex` | 启动时检查/下载的模型列表，逗号分隔，如 `pix2tex,latex_ocr` |
-| `PIX2TEX_WEIGHTS_URL` | pix2tex release 地址 | pix2tex 权重自动下载地址 |
+| `PRELOAD_MODELS` | `pix2text` | 启动时检查/下载的模型列表，逗号分隔，如 `pix2text,latex_ocr` |
+| `PIX2TEX_WEIGHTS_URL` | pix2tex release 地址 | 高精度版 LaTeX_OCR 权重自动下载地址（仅 LaTeX_OCR 使用） |
 | `LATEX_OCR_REPO_ID` | 空 | 高精度版 Hugging Face 仓库 ID，用于自动下载 |
 | `UNI_EQUATION_REPO_ID` | 空 | Uni-Equation Hugging Face 仓库 ID，用于自动下载 |
 | `MODEL_DOWNLOAD_TIMEOUT_SEC` | `1800` | 模型下载超时参考配置 |
+| `P2T_MFR_MODEL` | `mfr-1.5` | Pix2Text 公式识别模型版本 |
 
 ### 如何真正启用 LaTeX_OCR
 
-`LaTeX_OCR` 必须配置独立权重才会启用；如果未配置，前端会显示“未配置独立权重”，不会复用 pix2tex 权重，避免误以为模型已切换。
+`LaTeX_OCR` 必须配置独立权重才会启用；如果未配置，前端会显示“未配置独立权重”，不会复用 Pix2Text 权重，避免误以为模型已切换。
 
 #### 方式一：使用本地权重
 
@@ -241,7 +243,7 @@ backend/models/latex_ocr/weights.pth
 ```env
 ENABLE_LATEX_OCR=true
 LATEX_OCR_CHECKPOINT=./models/latex_ocr/weights.pth
-PRELOAD_MODELS=pix2tex,latex_ocr
+PRELOAD_MODELS=pix2text,latex_ocr
 ```
 
 #### 方式二：使用 Hugging Face 仓库
@@ -251,7 +253,7 @@ PRELOAD_MODELS=pix2tex,latex_ocr
 ```env
 ENABLE_LATEX_OCR=true
 LATEX_OCR_REPO_ID=your-org/your-latex-ocr-model
-PRELOAD_MODELS=pix2tex,latex_ocr
+PRELOAD_MODELS=pix2text,latex_ocr
 ```
 
 > 当前加载器默认在仓库或目录中查找 `weights.pth`。如果你的仓库文件名不同，请改为使用 `LATEX_OCR_CHECKPOINT` 指向实际文件。
@@ -298,7 +300,7 @@ http://127.0.0.1:8000/api/models
 
 ```json
 {
-  "model_id": "pix2tex"
+  "model_id": "pix2text"
 }
 ```
 
@@ -329,7 +331,7 @@ curl -X POST http://127.0.0.1:8000/api/models/latex_ocr/activate
 ```env
 ENABLE_UNI_EQUATION=true
 UNI_EQUATION_REPO_ID=your-org/your-uni-equation-model
-PRELOAD_MODELS=pix2tex,uni_equation
+PRELOAD_MODELS=pix2text,uni_equation
 ```
 
 如果仓库名就是可直接加载的模型名，也可以使用：
@@ -337,7 +339,7 @@ PRELOAD_MODELS=pix2tex,uni_equation
 ```env
 ENABLE_UNI_EQUATION=true
 UNI_EQUATION_MODEL_NAME=your-org/your-uni-equation-model
-PRELOAD_MODELS=pix2tex,uni_equation
+PRELOAD_MODELS=pix2text,uni_equation
 ```
 
 #### 方式二：使用本地模型目录
@@ -353,7 +355,7 @@ backend/models/uni_equation/
 ```env
 ENABLE_UNI_EQUATION=true
 UNI_EQUATION_CHECKPOINT=./models/uni_equation
-PRELOAD_MODELS=pix2tex,uni_equation
+PRELOAD_MODELS=pix2text,uni_equation
 ```
 
 #### 验证 Uni-Equation 是否生效

@@ -17,8 +17,16 @@
 - 当 `confidence >= 0.8` 时不显示提示。
 - 向后兼容：旧版后端未返回 `confidence` 字段时，默认视为高置信度处理，不报错。
 
+#### 替换基础模型为 Pix2Text (P2T)
+- 基础版 OCR 引擎由 `pix2tex` 替换为 `Pix2Text (P2T)`，使用 ONNX 后端，CPU 友好。
+- P2T 使用 MFR 1.5 模型，公式识别精度提升。
+- `LatexOCREngine` 改为直接继承 `BaseOCREngine`，仍使用 pix2tex 包的 `LatexOCR` 类。
+- 新增 `P2T_MFR_MODEL` 环境变量，可配置 P2T 公式识别模型版本（默认 `mfr-1.5`）。
+- 前端模型选择器显示名称由"基础版 (Pix2Tex)"更新为"基础版 (Pix2Text)"。
+
 ### 依赖
 - 新增 `react-image-crop` 前端裁剪库。
+- 新增 `pix2text>=1.1.4`，替代 `pix2tex` 作为基础版 OCR 引擎。
 
 ## [2.0.0] - 2026-06-07
 

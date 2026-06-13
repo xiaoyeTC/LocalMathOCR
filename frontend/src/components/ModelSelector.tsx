@@ -8,11 +8,11 @@ type Props = {
 };
 
 const fallbackCopy: Record<string, Pick<OcrModelMetadata, 'display_name' | 'description' | 'vram_requirement' | 'strengths'>> = {
-  pix2tex: {
-    display_name: '基础版 (Pix2Tex)',
-    description: '🚀 速度极快，支持 CPU 运行。适合简单的单行公式和清晰的截图。',
+  pix2text: {
+    display_name: '基础版 (Pix2Text)',
+    description: '🚀 轻量高效，支持 CPU 运行。基于 P2T MFR 模型，适合单行公式和清晰截图。',
     vram_requirement: '<2GB',
-    strengths: ['CPU 友好', '简单单行公式', '清晰截图'],
+    strengths: ['CPU 友好', '单行公式', '清晰截图', '快速识别'],
   },
   latex_ocr: {
     display_name: '高精度版 (LaTeX_OCR)',

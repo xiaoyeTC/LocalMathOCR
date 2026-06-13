@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Literal
 
 from app.config import get_settings
-from app.services.ocr_engine import BaseOCREngine, LatexOCREngine, Pix2TexEngine, UniEquationEngine
+from app.services.ocr_engine import BaseOCREngine, LatexOCREngine, Pix2TextEngine, UniEquationEngine
 
 
 ModelRuntimeState = Literal["downloading", "ready", "unavailable"]
@@ -37,7 +37,7 @@ class ModelRuntime:
 class ModelManager:
     def __init__(self) -> None:
         self.settings = get_settings()
-        self.default_model_id = self.settings.default_model_id or "pix2tex"
+        self.default_model_id = self.settings.default_model_id or "pix2text"
         self.active_model_id: str | None = None
         self._runtimes: dict[str, ModelRuntime] = {}
         self._switch_lock = asyncio.Lock()
@@ -46,7 +46,7 @@ class ModelManager:
         self._loop: asyncio.AbstractEventLoop | None = None
         self._register_defaults()
         if self.default_model_id not in self.enabled_model_ids:
-            self.default_model_id = "pix2tex"
+            self.default_model_id = "pix2text"
 
     @property
     def enabled_model_ids(self) -> set[str]:
@@ -55,14 +55,14 @@ class ModelManager:
     def _register_defaults(self) -> None:
         self.register(
             ModelMetadata(
-                id="pix2tex",
-                display_name="基础版 (Pix2Tex)",
-                description="🚀 速度极快，支持 CPU 运行。适合简单的单行公式和清晰的截图。",
+                id="pix2text",
+                display_name="基础版 (Pix2Text)",
+                description="🚀 轻量高效，支持 CPU 运行。基于 P2T MFR 模型，适合单行公式和清晰截图。",
                 vram_requirement="<2GB",
                 strengths=["CPU 友好", "单行公式", "清晰截图", "快速识别"],
             ),
-            enabled=self.settings.enable_pix2tex,
-            factory=lambda: Pix2TexEngine(),
+            enabled=self.settings.enable_pix2text,
+            factory=lambda: Pix2TextEngine(),
         )
         self.register(
             ModelMetadata(

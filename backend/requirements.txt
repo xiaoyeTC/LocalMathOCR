@@ -9,7 +9,7 @@ Pillow==11.0.0
 opencv-python-headless==4.10.0.84
 numpy==2.2.1
 torch>=2.2.0
-pix2tex>=0.1.2
+pix2text>=1.1.4
 transformers>=4.45.0
 accelerate>=0.34.0
 huggingface-hub>=0.24.0

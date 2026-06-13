@@ -32,7 +32,7 @@ export const useAppStore = create<AppState>((set) => ({
   preprocess: false,
   modelStatus: { status: 'downloading', device: 'cpu', message: '正在连接本地模型服务', progress: 0 },
   models: [],
-  selectedModelId: 'pix2tex',
+  selectedModelId: 'pix2text',
   history: [],
   confidence: null,
   setLatex: (latex) => set({ latex }),

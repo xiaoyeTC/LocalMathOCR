@@ -14,19 +14,20 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080,http://127.0.0.1:8080"
     max_upload_mb: int = 10
     return_preprocessed_image: bool = True
-    default_model_id: str = "pix2tex"
-    enable_pix2tex: bool = True
+    default_model_id: str = "pix2text"
+    enable_pix2text: bool = True
     enable_latex_ocr: bool = True
     enable_uni_equation: bool = False
     latex_ocr_checkpoint: Path | None = None
     uni_equation_model_name: str | None = None
     uni_equation_checkpoint: str | None = None
     max_loaded_models: int = Field(default=1, ge=1)
-    preload_models: str = "pix2tex"
+    preload_models: str = "pix2text"
     model_download_timeout_sec: int = 1800
     pix2tex_weights_url: str = "https://github.com/lukas-blecher/LaTeX-OCR/releases/download/v0.0.1/weights.pth"
     latex_ocr_repo_id: str | None = None
     uni_equation_repo_id: str | None = None
+    p2t_mfr_model: str = "mfr-1.5"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

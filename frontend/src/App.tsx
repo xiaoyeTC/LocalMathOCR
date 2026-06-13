@@ -13,7 +13,7 @@ import { usePasteImage } from './hooks/usePasteImage';
 import { ApiError, activateModel, clearHistory, createModelEvents, deleteHistory, getHistory, getModels, recognizeFormula, type ModelsEventPayload } from './services/api';
 import { useAppStore } from './stores/appStore';
 
-const FALLBACK_MODEL_ID = 'pix2tex';
+const FALLBACK_MODEL_ID = 'pix2text';
 
 export default function App() {
   const [dark, setDark] = useState(false);
