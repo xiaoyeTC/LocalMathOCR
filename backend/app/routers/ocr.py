@@ -4,6 +4,7 @@ from starlette.responses import StreamingResponse
 from app.config import get_settings
 from app.routers.common import get_model_manager, success
 from app.services.db import AsyncSessionLocal, create_history
+from app.services.postprocess import post_processor
 from app.services.preprocess import enhance_formula_image, make_thumbnail_data_url, preprocess_image, read_image
 
 router = APIRouter(prefix="/api", tags=["ocr"])
@@ -125,12 +126,14 @@ async def _recognize_with_model(
     except Exception as exc:
         raise HTTPException(status_code=503, detail={"message": str(exc), "fallback_model_id": FALLBACK_MODEL_ID}) from exc
 
+    cleaned_latex = post_processor.clean(prediction.latex)
+
     thumbnail = make_thumbnail_data_url(file_bytes)
     async with AsyncSessionLocal() as session:
-        await create_history(session, prediction.latex, thumbnail)
+        await create_history(session, cleaned_latex, thumbnail)
 
     return success({
-        "latex": prediction.latex,
+        "latex": cleaned_latex,
         "inference_time_ms": prediction.inference_time_ms,
         "variant": prediction.variant,
         "model_id": selected_model_id,

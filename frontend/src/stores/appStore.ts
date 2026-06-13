@@ -10,6 +10,7 @@ type AppState = {
   models: OcrModelMetadata[];
   selectedModelId: string;
   history: HistoryItem[];
+  confidence: number | null;
   setLatex: (latex: string) => void;
   insertLatex: (snippet: string) => void;
   setToast: (toast: string) => void;
@@ -19,6 +20,7 @@ type AppState = {
   setModels: (models: OcrModelMetadata[]) => void;
   setSelectedModelId: (modelId: string) => void;
   setHistory: (history: HistoryItem[]) => void;
+  setConfidence: (confidence: number | null) => void;
 };
 
 const initialLatex = '\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}';
@@ -32,6 +34,7 @@ export const useAppStore = create<AppState>((set) => ({
   models: [],
   selectedModelId: 'pix2tex',
   history: [],
+  confidence: null,
   setLatex: (latex) => set({ latex }),
   insertLatex: (snippet) => set((state) => ({ latex: `${state.latex}${snippet}` })),
   setToast: (toast) => set({ toast }),
@@ -41,4 +44,5 @@ export const useAppStore = create<AppState>((set) => ({
   setModels: (models) => set({ models }),
   setSelectedModelId: (selectedModelId) => set({ selectedModelId }),
   setHistory: (history) => set({ history }),
+  setConfidence: (confidence) => set({ confidence }),
 }));

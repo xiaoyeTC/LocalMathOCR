@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import { ConfidenceBanner } from './components/ConfidenceBanner';
 import { Header } from './components/Header';
 import { HistorySidebar } from './components/HistorySidebar';
+import { ImageCropper } from './components/ImageCropper';
 import { LatexEditor } from './components/LatexEditor';
 import { ModelSelector } from './components/ModelSelector';
 import { PreviewPane } from './components/PreviewPane';
@@ -15,6 +17,7 @@ const FALLBACK_MODEL_ID = 'pix2tex';
 
 export default function App() {
   const [dark, setDark] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const {
     latex,
     toast,
@@ -24,6 +27,7 @@ export default function App() {
     models,
     selectedModelId,
     history,
+    confidence,
     setLatex,
     insertLatex,
     setToast,
@@ -33,6 +37,7 @@ export default function App() {
     setModels,
     setSelectedModelId,
     setHistory,
+    setConfidence,
   } = useAppStore();
 
   useEffect(() => {
@@ -119,13 +124,14 @@ export default function App() {
   const runRecognition = useCallback(async (file: File, modelId: string) => {
     const result = await recognizeFormula(file, preprocess, modelId);
     setLatex(result.latex);
+    setConfidence(result.confidence ?? null);
     const modelName = models.find((model) => model.id === result.model_id)?.display_name || result.model_id || modelId;
     showToast(`识别完成：${result.inference_time_ms}ms · ${modelName}`);
     await refreshHistory();
     await refreshModels();
-  }, [models, preprocess, refreshHistory, refreshModels, setLatex, showToast]);
+  }, [models, preprocess, refreshHistory, refreshModels, setConfidence, setLatex, showToast]);
 
-  const handleFile = useCallback(async (file: File) => {
+  const handleFile = useCallback((file: File) => {
     if (modelStatus.status === 'downloading') {
       showToast('模型正在下载或加载，请稍候');
       return;
@@ -134,6 +140,12 @@ export default function App() {
       showToast('当前模型未启用，请选择可用模型');
       return;
     }
+    const url = URL.createObjectURL(file);
+    setCropImageSrc(url);
+  }, [modelStatus.status, showToast]);
+
+  const handleCroppedFile = useCallback(async (file: File) => {
+    setCropImageSrc(null);
     setLoading(true);
     try {
       await runRecognition(file, selectedModelId);
@@ -153,7 +165,12 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [modelStatus.status, runRecognition, selectedModelId, setLoading, setSelectedModelId, showToast]);
+  }, [runRecognition, selectedModelId, setLoading, setSelectedModelId, showToast]);
+
+  const handleCancelCrop = useCallback(() => {
+    if (cropImageSrc) URL.revokeObjectURL(cropImageSrc);
+    setCropImageSrc(null);
+  }, [cropImageSrc]);
 
   usePasteImage(handleFile);
 
@@ -197,7 +214,12 @@ export default function App() {
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
             <ModelSelector models={models} selectedModelId={selectedModelId} disabled={loading} onChange={handleSelectModel} />
-            <UploadZone modelStatus={modelStatus} loading={loading} preprocess={preprocess} onTogglePreprocess={setPreprocess} onFile={handleFile} />
+            {cropImageSrc ? (
+              <ImageCropper imageSrc={cropImageSrc} onConfirm={handleCroppedFile} onCancel={handleCancelCrop} />
+            ) : (
+              <UploadZone modelStatus={modelStatus} loading={loading} preprocess={preprocess} onTogglePreprocess={setPreprocess} onFile={handleFile} />
+            )}
+            <ConfidenceBanner confidence={confidence} />
             <div className="grid gap-6 lg:grid-cols-2">
               <LatexEditor value={latex} onChange={setLatex} onCopy={copyLatex} />
               <PreviewPane latex={latex} onToast={showToast} />

@@ -33,7 +33,7 @@ export type ModelsEventPayload = {
   default_model_id: string;
   models: OcrModelMetadata[];
 };
-export type RecognizeResult = { latex: string; inference_time_ms: number; variant?: string; model_id?: string; preprocessed_image_base64?: string | null };
+export type RecognizeResult = { latex: string; inference_time_ms: number; variant?: string; model_id?: string; preprocessed_image_base64?: string | null; confidence?: number };
 export type HistoryItem = { id: number; latex: string; image_base64?: string | null; created_at: string };
 
 export class ApiError extends Error {
