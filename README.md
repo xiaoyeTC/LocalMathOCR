@@ -225,6 +225,7 @@ npm run dev
 | `UNI_EQUATION_REPO_ID` | 空 | Uni-Equation Hugging Face 仓库 ID，用于自动下载 |
 | `MODEL_DOWNLOAD_TIMEOUT_SEC` | `1800` | 模型下载超时参考配置 |
 | `P2T_MFR_MODEL` | `mfr-1.5` | Pix2Text 公式识别模型版本 |
+| `HF_ENDPOINT` | 空 | HuggingFace 镜像地址，国内用户建议设为 `https://hf-mirror.com` |
 
 ### 如何真正启用 LaTeX_OCR
 

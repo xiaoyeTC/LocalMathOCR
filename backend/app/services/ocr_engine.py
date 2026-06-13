@@ -128,38 +128,96 @@ class BaseOCREngine:
             pass
 
 
+HF_MIRROR = "https://hf-mirror.com"
+
+
+def _hf_download_with_mirror(repo_id: str, local_dir: str, progress_cb: ProgressCallback | None = None) -> None:
+    from requests.exceptions import ConnectionError as ReqConnectionError
+
+    original = os.environ.get("HF_ENDPOINT")
+    try:
+        if original:
+            os.environ["HF_ENDPOINT"] = original
+        elif "HF_ENDPOINT" in os.environ:
+            del os.environ["HF_ENDPOINT"]
+        if progress_cb:
+            progress_cb(10, f"trying official HuggingFace for {repo_id}")
+        from huggingface_hub import snapshot_download
+        snapshot_download(repo_id=repo_id, local_dir=local_dir, local_dir_use_symlinks=False)
+    except (ReqConnectionError, OSError):
+        if progress_cb:
+            progress_cb(20, f"official failed, using mirror {HF_MIRROR}")
+        os.environ["HF_ENDPOINT"] = HF_MIRROR
+        from huggingface_hub import snapshot_download
+        snapshot_download(repo_id=repo_id, local_dir=local_dir, local_dir_use_symlinks=False)
+    finally:
+        if original is not None:
+            os.environ["HF_ENDPOINT"] = original
+        elif "HF_ENDPOINT" in os.environ:
+            del os.environ["HF_ENDPOINT"]
+
+
 class Pix2TextEngine(BaseOCREngine):
+    MODEL_VERSION = "1.1"
+
     def __init__(self, model_id: str = "pix2text") -> None:
         super().__init__(model_id=model_id)
+        self._hf_model_id: str | None = None
+        self._local_model_id: str | None = None
 
-    def _p2t_model_dir(self) -> Path:
-        return Path.home() / ".pix2text"
+    def _resolve_model_info(self) -> None:
+        from pix2text.consts import AVAILABLE_MODELS
+        info = AVAILABLE_MODELS.get_info(self.settings.p2t_mfr_model, 'onnx')
+        self._hf_model_id = info['hf_model_id']
+        self._local_model_id = info['local_model_id']
+
+    def _model_dir(self) -> Path:
+        from pix2text.utils import data_dir
+        return Path(data_dir()) / self.MODEL_VERSION / self._local_model_id
 
     def weights_exist(self) -> bool:
-        model_dir = self._p2t_model_dir()
+        self._resolve_model_info()
+        model_dir = self._model_dir()
         if not model_dir.exists():
             return False
-        return any(model_dir.rglob("*.onnx"))
+        return any(model_dir.glob('**/[!.]*'))
+
+    def download_sync(self, progress_cb: ProgressCallback | None = None) -> None:
+        self._resolve_model_info()
+        model_dir = self._model_dir()
+        if model_dir.exists() and any(model_dir.glob('**/[!.]*')):
+            if progress_cb:
+                progress_cb(100, "pix2text model already downloaded")
+            return
+        if progress_cb:
+            progress_cb(5, f"downloading {self._hf_model_id}")
+        _hf_download_with_mirror(self._hf_model_id, str(model_dir), progress_cb)
+        if not any(model_dir.glob('**/[!.]*')):
+            raise RuntimeError(f"P2T model directory is empty after download: {model_dir}")
+        if progress_cb:
+            progress_cb(100, "pix2text model downloaded")
 
     def load_sync(self) -> None:
         self.status = "loading"
         self.message = "model is loading"
         try:
             self.device = self._resolve_device()
-            from pix2text import Pix2Text
+            self._resolve_model_info()
+            from pix2text.latex_ocr import LatexOCR
+            from pix2text.text_formula_ocr import TextFormulaOCR
 
-            total_config = {
-                'text_formula': {
-                    'formula': {
-                        'model_name': self.settings.p2t_mfr_model,
-                        'model_backend': 'onnx',
-                    },
-                },
-            }
-            self._model = Pix2Text.from_config(
-                total_configs=total_config,
-                enable_table=False,
+            model_dir = str(self._model_dir())
+            latex_ocr = LatexOCR(
+                model_name=self.settings.p2t_mfr_model,
+                model_backend='onnx',
                 device='cpu' if self.device == 'cpu' else self.device,
+                model_dir=model_dir,
+            )
+            self._model = TextFormulaOCR(
+                text_ocr=None,
+                mfd=None,
+                latex_ocr=latex_ocr,
+                enable_formula=True,
             )
             self.status = "ready"
             self.message = f"{self.model_id} loaded on {self.device}"
@@ -169,17 +227,9 @@ class Pix2TextEngine(BaseOCREngine):
             self._model = None
 
     def _predict_sync(self, image: Image.Image, variant: str = "default") -> OCRPrediction:
-        import tempfile
-
         started = time.perf_counter()
         try:
-            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-                image.save(tmp, format="PNG")
-                tmp_path = tmp.name
-            try:
-                result = self._model.recognize_formula(tmp_path)
-            finally:
-                os.unlink(tmp_path)
+            result = self._model.recognize_formula(image, return_text=True)
             latex = result if isinstance(result, str) else str(result)
             return OCRPrediction(
                 latex=latex.strip(),
@@ -239,8 +289,7 @@ class LatexOCREngine(BaseOCREngine):
         if self.repo_id:
             if progress_cb:
                 progress_cb(5, "downloading latex_ocr snapshot")
-            from huggingface_hub import snapshot_download
-            snapshot_download(repo_id=self.repo_id, local_dir=str(self._repo_dir()), local_dir_use_symlinks=False)
+            _hf_download_with_mirror(self.repo_id, str(self._repo_dir()), progress_cb)
             if not self._repo_weights_path().exists():
                 raise FileNotFoundError(f"latex_ocr snapshot downloaded but weights.pth was not found in {self._repo_dir()}")
             self.checkpoint = str(self._repo_weights_path())
@@ -366,9 +415,7 @@ class UniEquationEngine(BaseOCREngine):
             raise RuntimeError("UNI_EQUATION_REPO_ID or UNI_EQUATION_MODEL_NAME must be configured")
         if progress_cb:
             progress_cb(5, "downloading uni_equation snapshot")
-        from huggingface_hub import snapshot_download
-
-        snapshot_download(repo_id=self.repo_id, local_dir=str(self._repo_dir()), local_dir_use_symlinks=False)
+        _hf_download_with_mirror(self.repo_id, str(self._repo_dir()), progress_cb)
         if progress_cb:
             progress_cb(100, "uni_equation snapshot downloaded")
 

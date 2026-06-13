@@ -1,5 +1,24 @@
 # 更新日志
 
+## [2.2.0] - 2026-06-13
+
+### 优化
+
+#### 模型下载与进度管理
+- 重构三个引擎（Pix2Text、LaTeX_OCR、Uni-Equation）的下载逻辑，统一为「检查已下载 → 下载 → 加载」三阶段流程。
+- 已下载的模型自动跳过下载步骤，直接进入加载阶段。
+- 下载阶段通过 SSE 实时推送进度到前端，前端模型卡片可显示下载百分比。
+- Pix2Text 引擎的下载与加载完全分离，下载阶段使用 `snapshot_download` + 进度回调，加载阶段仅从本地读取。
+
+#### HuggingFace 镜像回退策略
+- 新增 `_hf_download_with_mirror()` 共用函数，统一三个引擎的 HuggingFace 下载行为。
+- 下载时先尝试 HuggingFace 官方渠道，连接失败后自动回退 `hf-mirror.com` 国内镜像。
+- 用户可通过 `HF_ENDPOINT` 环境变量自定义 HuggingFace 端点。
+- `LatexOCREngine` 和 `UniEquationEngine` 的 `download_sync` 同步接入镜像回退策略。
+
+### 配置
+- `HF_ENDPOINT`：新增环境变量，可指定 HuggingFace 镜像地址（如 `https://hf-mirror.com`）。
+
 ## [2.1.0] - 2026-06-13
 
 ### 新增
