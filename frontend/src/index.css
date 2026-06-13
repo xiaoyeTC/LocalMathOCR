@@ -4,7 +4,18 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: light; }
-.dark { color-scheme: dark; }
+:root {
+  color-scheme: light;
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-light: #DBEAFE;
+  --color-primary-dark: #1E40AF;
+}
+
+.dark {
+  color-scheme: dark;
+  --color-primary-light: #1E3A5F;
+}
+
 body { margin: 0; font-family: "Times New Roman", Times, serif; }
 .katex-display { margin: 0; }

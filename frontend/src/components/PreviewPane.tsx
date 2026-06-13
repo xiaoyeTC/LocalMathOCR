@@ -15,7 +15,7 @@ type ExportFont = {
 
 const EXPORT_FONTS: ExportFont[] = [
   { label: 'Times New Roman', value: 'times', stack: '"Times New Roman", Times, serif' },
-  { label: 'KaTeX 默认', value: 'katex', stack: '' },
+  { label: 'KaTeX 内置', value: 'katex', stack: '' },
   { label: 'Cambria Math', value: 'cambria', stack: '"Cambria Math", Cambria, serif' },
   { label: 'Georgia', value: 'georgia', stack: 'Georgia, "Times New Roman", serif' },
   { label: 'STIX Two Math', value: 'stix', stack: '"STIX Two Math", "STIX Two Text", "Times New Roman", serif' },

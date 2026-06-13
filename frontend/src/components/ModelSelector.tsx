@@ -11,19 +11,19 @@ const fallbackCopy: Record<string, Pick<OcrModelMetadata, 'display_name' | 'desc
   pix2text: {
     display_name: '基础版 (Pix2Text)',
     description: '🚀 轻量高效，支持 CPU 运行。基于 P2T MFR 模型，适合单行公式和清晰截图。',
-    vram_requirement: '<2GB',
+    vram_requirement: '<1GB',
     strengths: ['CPU 友好', '单行公式', '清晰截图', '快速识别'],
   },
   latex_ocr: {
     display_name: '高精度版 (LaTeX_OCR)',
     description: '🎯 准确率大幅提升。适合包含上下标、希腊字母的常规复杂公式。推荐 GPU 运行。',
-    vram_requirement: '4GB - 6GB',
+    vram_requirement: '2GB+',
     strengths: ['上下标', '希腊字母', '常规复杂公式'],
   },
   uni_equation: {
     display_name: '专业版 (Uni-Equation)',
     description: '🧠 复杂结构克星。专为多层嵌套分数、大型矩阵、物理/化学长公式优化。',
-    vram_requirement: '>8GB',
+    vram_requirement: '6GB+',
     strengths: ['嵌套分数', '大型矩阵', '长公式'],
   },
 };

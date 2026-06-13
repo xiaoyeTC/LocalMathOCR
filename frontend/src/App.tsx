@@ -5,6 +5,7 @@ import { HistorySidebar } from './components/HistorySidebar';
 import { ImageCropper } from './components/ImageCropper';
 import { LatexEditor } from './components/LatexEditor';
 import { ModelSelector } from './components/ModelSelector';
+import { ModelSelectorDropdown } from './components/ModelSelectorDropdown';
 import { PreviewPane } from './components/PreviewPane';
 import { SymbolPanel } from './components/SymbolPanel';
 import { Toast } from './components/Toast';
@@ -12,12 +13,14 @@ import { UploadZone } from './components/UploadZone';
 import { usePasteImage } from './hooks/usePasteImage';
 import { ApiError, activateModel, clearHistory, createModelEvents, deleteHistory, getHistory, getModels, recognizeFormula, type ModelsEventPayload } from './services/api';
 import { useAppStore } from './stores/appStore';
+import { useThemeStore } from './stores/themeStore';
 
 const FALLBACK_MODEL_ID = 'pix2text';
 
 export default function App() {
   const [dark, setDark] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const { mode: themeMode } = useThemeStore();
   const {
     latex,
     toast,
@@ -203,7 +206,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <Header modelStatus={modelStatus} dark={dark} onToggleDark={() => setDark((value) => !value)} />
+      <Header modelStatus={modelStatus} models={models} selectedModelId={selectedModelId} dark={dark} onToggleDark={() => setDark((value) => !value)} />
       <main className="mx-auto max-w-7xl px-4 py-8">
         <section className="mb-8 text-center">
           <p className="text-sm font-semibold text-primary">100% 本地推理 · 零外部识别 API 成本</p>
@@ -213,7 +216,11 @@ export default function App() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
-            <ModelSelector models={models} selectedModelId={selectedModelId} disabled={loading} onChange={handleSelectModel} />
+            {themeMode === 'modern' ? (
+              <ModelSelectorDropdown models={models} selectedModelId={selectedModelId} disabled={loading} onChange={handleSelectModel} />
+            ) : (
+              <ModelSelector models={models} selectedModelId={selectedModelId} disabled={loading} onChange={handleSelectModel} />
+            )}
             {cropImageSrc ? (
               <ImageCropper imageSrc={cropImageSrc} onConfirm={handleCroppedFile} onCancel={handleCancelCrop} />
             ) : (

@@ -49,6 +49,7 @@
 - **LaTeX 编辑与实时预览**：CodeMirror 编辑源码，KaTeX 实时渲染结果
 - **导出能力**：支持 PNG / SVG 导出，默认 Times New Roman，并可切换 Cambria Math、STIX、Latin Modern 等字体
 - **历史记录**：本地 SQLite 持久化，支持回显、删除和清空
+- **主题定制**：8 种预设配色方案，支持卡片式 / 下拉菜单式两种模型选择器风格
 - **双端开发体验**：后端 FastAPI + 前端 Vite，结构清晰，便于二次开发
 
 ---
@@ -65,8 +66,9 @@
 | 实时预览 | 右侧预览区域即时展示最终渲染效果 |
 | 导出 | 可导出 PNG / SVG，并选择导出字体 |
 | 历史记录 | 查看历史识别记录，支持删除与清空 |
-| 模型选择 | 展示 Pix2Text、LaTeX_OCR、Uni-Equation 的状态、显存需求、特点与切换按钮 |
-| 模型状态 | 通过 SSE 实时显示 downloading / ready / unavailable 和下载进度 |
+| 模型选择 | 卡片式或下拉菜单式，展示模型状态、显存需求、特点与切换按钮 |
+| 模型状态 | Header 实时显示当前模型名称、就绪状态和设备信息 |
+| 主题设置 | Header ⚙️ 按钮，支持切换模型选择器样式和 8 种配色方案 |
 
 ---
 
@@ -140,7 +142,7 @@ start.bat
 - 启动后端与前端窗口
 - 自动打开浏览器访问前端页面
 
-> 首次运行 Pix2Text 时可能需要下载或加载模型，请等待页面右上角状态变为 **ready**。
+> 首次运行 Pix2Text 时可能需要下载或加载模型，请等待页面右上角状态变为 **就绪**。
 
 ### 3. 停止服务
 
@@ -214,17 +216,15 @@ npm run dev
 | `DEFAULT_MODEL_ID` | `pix2text` | 默认模型 ID |
 | `ENABLE_PIX2TEXT` | `true` | 是否启用基础版 Pix2Text |
 | `ENABLE_LATEX_OCR` | `true` | 是否启用高精度版 LaTeX_OCR |
-| `ENABLE_UNI_EQUATION` | `false` | 是否启用专业版 Uni-Equation，大显存环境建议手动开启 |
-| `LATEX_OCR_CHECKPOINT` | 空 | 高精度版本地权重路径（可选，不配置时使用 pix2tex 包内置权重） |
+| `ENABLE_UNI_EQUATION` | `false` | 是否启用专业版 Uni-Equation |
+| `LATEX_OCR_CHECKPOINT` | 空 | 高精度版本地权重路径（可选） |
 | `LATEX_OCR_REPO_ID` | 空 | 高精度版 Hugging Face 仓库 ID（可选） |
 | `UNI_EQUATION_MODEL_NAME` | `anonymous945/Uni-MER` | Uni-Equation Hugging Face 模型名 |
-| `UNI_EQUATION_CHECKPOINT` | 空 | Uni-Equation 本地权重/模型目录，优先级高于模型名 |
+| `UNI_EQUATION_CHECKPOINT` | 空 | Uni-Equation 本地权重/模型目录 |
 | `UNI_EQUATION_REPO_ID` | 空 | Uni-Equation Hugging Face 仓库 ID（可选） |
-| `MAX_LOADED_MODELS` | `1` | 同时保留在显存/内存中的模型数量，超过后自动卸载旧模型 |
-| `PRELOAD_MODELS` | `pix2text` | 启动时检查/下载的模型列表，逗号分隔，如 `pix2text,latex_ocr` |
-| `PIX2TEX_WEIGHTS_URL` | pix2tex release 地址 | 高精度版 LaTeX_OCR 权重自动下载地址（仅 LaTeX_OCR 使用） |
-| `LATEX_OCR_REPO_ID` | 空 | 高精度版 Hugging Face 仓库 ID，用于自动下载 |
-| `UNI_EQUATION_REPO_ID` | 空 | Uni-Equation Hugging Face 仓库 ID，用于自动下载 |
+| `MAX_LOADED_MODELS` | `1` | 同时保留在显存/内存中的模型数量 |
+| `PRELOAD_MODELS` | `pix2text` | 启动时检查/下载的模型列表，逗号分隔 |
+| `PIX2TEX_WEIGHTS_URL` | pix2tex release 地址 | 高精度版 LaTeX_OCR 权重自动下载地址 |
 | `MODEL_DOWNLOAD_TIMEOUT_SEC` | `1800` | 模型下载超时参考配置 |
 | `P2T_MFR_MODEL` | `mfr-1.5` | Pix2Text 公式识别模型版本 |
 | `HF_ENDPOINT` | 空 | HuggingFace 镜像地址，国内用户建议设为 `https://hf-mirror.com` |
@@ -247,7 +247,7 @@ LATEX_OCR_REPO_ID=your-org/your-latex-ocr-model
 
 ### 如何启用 Uni-Equation
 
-`Uni-Equation` 默认关闭（`ENABLE_UNI_EQUATION=false`），显存建议 `>8GB`。
+`Uni-Equation` 默认关闭（`ENABLE_UNI_EQUATION=false`），显存建议 6GB+。
 
 在后端 `.env` 中配置即可启用：
 
@@ -257,23 +257,11 @@ ENABLE_UNI_EQUATION=true
 
 首次启动时会自动从 HuggingFace 下载默认模型 `anonymous945/Uni-MER`。国内用户建议设置 `HF_ENDPOINT=https://hf-mirror.com`。
 
-如需使用自定义模型：
-
-```env
-UNI_EQUATION_MODEL_NAME=your-org/your-model
-```
-
-或使用本地模型目录：
-
-```env
-UNI_EQUATION_CHECKPOINT=./models/uni_equation
-```
-
 ### 字体与导出说明
 
 预览和导出默认使用 `Times New Roman`。由于 KaTeX 自带数学字体样式，项目已对预览区和导出容器增加字体覆盖规则，确保选择 Times New Roman、Cambria Math、STIX Two Math 等选项时，公式主体也会跟随切换。
 
-如果你的系统没有安装某个字体，浏览器会自动回退到字体栈中的下一个字体。建议 Windows 用户使用 `Times New Roman` 或 `Cambria Math`，科研排版可安装 `STIX Two Math` 或 `Latin Modern Math`。
+如果系统没有安装某个字体，浏览器会自动回退到字体栈中的下一个字体。建议 Windows 用户使用 `Times New Roman` 或 `Cambria Math`，科研排版可安装 `STIX Two Math` 或 `Latin Modern Math`。
 
 ### 前端
 
@@ -297,9 +285,9 @@ UNI_EQUATION_CHECKPOINT=./models/uni_equation
 - `GET /api/models/events`（SSE 模型状态流）
 - `POST /api/models/{model_id}/activate`
 - `GET /api/model-status`
-- `POST /api/ocr`  
+- `POST /api/ocr`
   表单字段：`file`、`preprocess`、`model_id`
-- `POST /api/recognize`（兼容旧接口）  
+- `POST /api/recognize`（兼容旧接口）
   表单字段：`file`、`preprocess`、`model_id`
 - `GET /api/history`
 - `POST /api/history`
@@ -322,8 +310,8 @@ LocalMathOCR/
 │  ├─ index.html
 │  └─ package.json
 ├─ docs/
-│  ├─ preview-main.svg
-│  ├─ preview-export.svg
+│  ├─ preview-main.png
+│  ├─ preview-export.png
 │  ├─ preview-model-selector.svg
 │  └─ model-lifecycle.svg
 ├─ start.bat
