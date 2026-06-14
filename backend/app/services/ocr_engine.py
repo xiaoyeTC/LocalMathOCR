@@ -207,11 +207,24 @@ class Pix2TextEngine(BaseOCREngine):
             from pix2text.text_formula_ocr import TextFormulaOCR
 
             model_dir = str(self._model_dir())
+
+            more_model_configs = {}
+            if self.device == 'cuda':
+                try:
+                    import onnxruntime
+                    available = onnxruntime.get_available_providers()
+                    if 'CUDAExecutionProvider' in available:
+                        more_model_configs['provider'] = 'CUDAExecutionProvider'
+                    else:
+                        self.message = "onnxruntime-gpu not installed, using CPU"
+                except Exception:
+                    pass
+
             latex_ocr = LatexOCR(
                 model_name=self.settings.p2t_mfr_model,
                 model_backend='onnx',
-                device='cpu' if self.device == 'cpu' else self.device,
                 model_dir=model_dir,
+                more_model_configs=more_model_configs or None,
             )
             self._model = TextFormulaOCR(
                 text_ocr=None,

@@ -24,7 +24,7 @@ const fallbackCopy: Record<string, Pick<OcrModelMetadata, 'display_name' | 'desc
     display_name: '专业版 (Uni-Equation)',
     description: '🧠 复杂结构克星。专为多层嵌套分数、大型矩阵、物理/化学长公式优化。',
     vram_requirement: '6GB+',
-    strengths: ['嵌套分数', '大型矩阵', '长公式'],
+    strengths: ['嵌套分数', '大型矩阵', '长公式', '物理/化学公式'],
   },
 };
 

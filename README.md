@@ -227,7 +227,7 @@ npm run dev
 | `ENABLE_UNI_EQUATION` | `false` | 是否启用专业版 Uni-Equation |
 | `LATEX_OCR_CHECKPOINT` | 空 | 高精度版本地权重路径（可选） |
 | `LATEX_OCR_REPO_ID` | 空 | 高精度版 Hugging Face 仓库 ID（可选） |
-| `UNI_EQUATION_MODEL_NAME` | `anonymous945/Uni-MER` | Uni-Equation Hugging Face 模型名 |
+| `UNI_EQUATION_MODEL_NAME` | `wanderkid/unimernet` | Uni-Equation Hugging Face 模型名 |
 | `UNI_EQUATION_CHECKPOINT` | 空 | Uni-Equation 本地权重/模型目录 |
 | `UNI_EQUATION_REPO_ID` | 空 | Uni-Equation Hugging Face 仓库 ID（可选） |
 | `MAX_LOADED_MODELS` | `1` | 同时保留在显存/内存中的模型数量 |
@@ -263,7 +263,7 @@ LATEX_OCR_REPO_ID=your-org/your-latex-ocr-model
 ENABLE_UNI_EQUATION=true
 ```
 
-首次启动时会自动从 HuggingFace 下载默认模型 `anonymous945/Uni-MER`。国内用户建议设置 `HF_ENDPOINT=https://hf-mirror.com`。
+首次启动时会自动从 HuggingFace 下载默认模型 `wanderkid/unimernet`。国内用户建议设置 `HF_ENDPOINT=https://hf-mirror.com`。
 
 ### 字体与导出说明
 
