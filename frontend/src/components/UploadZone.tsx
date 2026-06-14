@@ -5,12 +5,10 @@ import type { ModelStatus } from '../services/api';
 type Props = {
   modelStatus: ModelStatus;
   loading: boolean;
-  preprocess: boolean;
-  onTogglePreprocess: (value: boolean) => void;
   onFile: (file: File) => void;
 };
 
-export function UploadZone({ modelStatus, loading, preprocess, onTogglePreprocess, onFile }: Props) {
+export function UploadZone({ modelStatus, loading, onFile }: Props) {
   const disabled = modelStatus.status === 'downloading' || modelStatus.status === 'unavailable' || loading;
   const requested = modelStatus.requested_device?.toUpperCase();
   const actual = modelStatus.device.toUpperCase();
@@ -40,10 +38,6 @@ export function UploadZone({ modelStatus, loading, preprocess, onTogglePreproces
           <button type="button" onClick={open} disabled={disabled} className="rounded-xl bg-primary px-5 py-2.5 font-medium text-white shadow disabled:cursor-not-allowed disabled:bg-slate-400">
             {loading ? '识别中...' : '选择文件'}
           </button>
-          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm dark:border-slate-700 dark:text-slate-200">
-            <input type="checkbox" checked={preprocess} onChange={(event) => onTogglePreprocess(event.target.checked)} className="h-4 w-4" />
-            轻度预处理
-          </label>
           <span className="rounded-xl bg-slate-100 px-4 py-2.5 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">设备：{deviceLabel}</span>
         </div>
         {modelStatus.status === 'downloading' && <p className="mt-4 text-sm text-amber-600 dark:text-amber-300">{modelStatus.message} · {modelStatus.progress}%</p>}

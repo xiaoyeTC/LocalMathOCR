@@ -7,6 +7,7 @@ import { LatexEditor } from './components/LatexEditor';
 import { ModelSelector } from './components/ModelSelector';
 import { ModelSelectorDropdown } from './components/ModelSelectorDropdown';
 import { PreviewPane } from './components/PreviewPane';
+import { SettingsPanel } from './components/SettingsPanel';
 import { SymbolPanel } from './components/SymbolPanel';
 import { Toast } from './components/Toast';
 import { UploadZone } from './components/UploadZone';
@@ -20,6 +21,7 @@ const FALLBACK_MODEL_ID = 'pix2text';
 export default function App() {
   const [dark, setDark] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
   const { mode: themeMode } = useThemeStore();
   const {
     latex,
@@ -210,7 +212,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <Header modelStatus={modelStatus} models={models} selectedModelId={selectedModelId} dark={dark} onToggleDark={() => setDark((value) => !value)} />
+      <Header modelStatus={modelStatus} models={models} selectedModelId={selectedModelId} dark={dark} onToggleDark={() => setDark((value) => !value)} onOpenSettings={() => setShowSettings(true)} />
+      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
       <main className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-8">
         <section className="mb-4 text-center sm:mb-8">
           <p className="text-xs font-semibold text-primary sm:text-sm">100% 本地推理 · 零外部识别 API 成本</p>
@@ -228,7 +231,7 @@ export default function App() {
             {cropImageSrc ? (
               <ImageCropper imageSrc={cropImageSrc} onConfirm={handleCroppedFile} onCancel={handleCancelCrop} />
             ) : (
-              <UploadZone modelStatus={modelStatus} loading={loading} preprocess={preprocess} onTogglePreprocess={setPreprocess} onFile={handleFile} />
+              <UploadZone modelStatus={modelStatus} loading={loading} onFile={handleFile} />
             )}
             <ConfidenceBanner confidence={confidence} />
             <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">

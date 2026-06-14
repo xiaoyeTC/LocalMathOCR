@@ -19,43 +19,44 @@
 
 ## 项目预览
 
-### 主界面（桌面端）
+<table>
+  <tr>
+    <td align="center"><b>桌面端主界面</b></td>
+    <td align="center"><b>移动端适配</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/preview-main.png" width="100%"></td>
+    <td><img src="docs/preview-mobile.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>导出与字体选择</b></td>
+    <td align="center"><b>设置面板</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/preview-export.png" width="100%"></td>
+    <td><img src="docs/preview-settings.png" width="100%"></td>
+  </tr>
+</table>
 
-![LocalMathOCR 主界面](docs/preview-main.png)
+### 架构设计
 
-### 移动端适配
-
-![LocalMathOCR 移动端](docs/preview-mobile.png)
-
-### 导出与字体选择
-
-![LocalMathOCR 导出与字体选择](docs/preview-export.png)
-
-### 模型选择与状态同步
-
-![LocalMathOCR 模型选择](docs/preview-model-selector.svg)
-
-### 模型生命周期管理
-
-![LocalMathOCR 模型生命周期](docs/model-lifecycle.svg)
+| 模型选择与状态同步 | 模型生命周期管理 |
+| :---: | :---: |
+| ![模型选择](docs/preview-model-selector.svg) | ![模型生命周期](docs/model-lifecycle.svg) |
 
 ---
 
 ## 核心特性
 
-- **全本地识别**：不依赖外部付费 OCR API，公式识别在本机完成
-- **多模型动态切换**：支持 Pix2Text、LaTeX_OCR、Uni-Equation 的启用、下载、热切换与状态同步
-- **CPU / GPU 自动适配**：支持自动检测 CUDA，也可手动切换运行模式
-- **图片预处理**：灰度化、二值化、去白边、放大、倾斜校正，提升识别稳定性
-- **拖拽 / 上传 / 剪贴板粘贴**：支持 JPG、PNG、WebP 直接识别
-- **手动框选裁剪**：上传后进入裁剪模式，可拖拽选区精确框选公式区域，减少无关内容干扰
-- **识别置信度提示**：OCR 返回置信度评分，低于阈值时自动弹出警告，提示人工核对
-- **LaTeX 编辑与实时预览**：CodeMirror 编辑源码，KaTeX 实时渲染结果
-- **导出能力**：支持 PNG / SVG 导出，默认 Times New Roman，并可切换 Cambria Math、STIX、Latin Modern 等字体
-- **历史记录**：本地 SQLite 持久化，支持回显、删除和清空
-- **主题定制**：8 种预设配色方案，支持卡片式 / 下拉菜单式两种模型选择器风格
-- **移动端适配**：响应式布局，手机端可正常使用全部核心功能
-- **双端开发体验**：后端 FastAPI + 前端 Vite，结构清晰，便于二次开发
+- **全本地识别** — 不依赖外部付费 OCR API，公式识别在本机完成
+- **多模型动态切换** — Pix2Text、LaTeX_OCR、Uni-Equation 三种引擎，支持下载、热切换与状态同步
+- **CPU / GPU 自动适配** — 自动检测 CUDA，也可手动切换运行模式
+- **手动框选裁剪** — 上传后进入裁剪模式，移动端支持放大镜辅助框选
+- **识别置信度提示** — OCR 返回置信度评分，低于阈值自动弹出警告
+- **主题定制** — 8 种预设配色方案，卡片式 / 下拉菜单式两种模型选择器风格
+- **设置面板** — 可视化配置默认模型、预处理、模型开关等参数
+- **历史记录隔离** — 按浏览器 Session 隔离，不同标签页互不影响
+- **移动端适配** — 响应式布局，手机端可正常使用全部核心功能
 
 ---
 
@@ -64,16 +65,16 @@
 | 模块 | 说明 |
 | --- | --- |
 | 上传识别 | 拖拽、上传、粘贴图片，一键识别公式 |
-| 手动框选 | 上传后进入裁剪模式，可拖拽选区框选纯公式区域，确认后裁剪发送识别 |
-| 置信度提示 | 识别置信度低于 80% 时显示警告条，提示人工核对 |
-| 预处理开关 | 对输入图像做轻度预处理，适合截图和拍照图 |
-| LaTeX 编辑器 | 可直接修改识别结果，适合快速修正公式 |
-| 实时预览 | 右侧预览区域即时展示最终渲染效果 |
-| 导出 | 可导出 PNG / SVG，并选择导出字体 |
-| 历史记录 | 查看历史识别记录，支持删除与清空 |
-| 模型选择 | 卡片式或下拉菜单式，展示模型状态、显存需求、特点与切换按钮 |
+| 手动框选 | 上传后进入裁剪模式，可拖拽选区框选纯公式区域 |
+| 置信度提示 | 识别置信度低于 80% 时显示警告条 |
+| LaTeX 编辑器 | CodeMirror 编辑源码，支持语法高亮 |
+| 实时预览 | KaTeX 渲染，支持 7 种字体切换 |
+| 导出 | PNG / SVG 导出，可选字体 |
+| 历史记录 | 按浏览器隔离，支持删除与清空 |
+| 模型选择 | 卡片式或下拉菜单式，展示状态、显存需求与切换按钮 |
 | 模型状态 | Header 实时显示当前模型名称、就绪状态和设备信息 |
-| 主题设置 | Header ⚙️ 按钮，支持切换模型选择器样式和 8 种配色方案 |
+| 设置面板 | 通用设置 + 管理员设置，支持保存到 `.env` |
+| 主题设置 | 8 种配色 + 两种选择器风格 |
 
 ---
 
@@ -112,101 +113,52 @@
 
 ### 1. 环境要求
 
-#### CPU 模式
-
-- Python 3.10+
-- 建议 4 核 CPU、8GB 内存以上
-- 首次模型加载可能需要数十秒
-
-#### GPU 模式
-
-- NVIDIA GPU，建议 6GB 显存以上
-- 已安装 NVIDIA Driver
-- 可访问 CUDA / NVIDIA Container Toolkit
-
----
+| 模式 | 要求 |
+| --- | --- |
+| **CPU** | Python 3.10+，4 核 CPU，8GB 内存 |
+| **GPU** | NVIDIA GPU，6GB+ 显存，已安装 NVIDIA Driver |
 
 ### 2. Windows 一键启动
 
-双击根目录脚本：
-
 ```text
-start.bat
+双击 start.bat → 选择 [1] CPU 或 [2] GPU → 自动安装依赖并启动
 ```
 
-启动后可选择：
-
-```text
-[1] CPU 模式：兼容性最好，速度较慢
-[2] GPU 模式：需要 NVIDIA GPU / CUDA 环境，速度更快
-```
-
-脚本会自动完成：
-
-- 检查 Python、npm、端口占用
-- 创建后端虚拟环境 `backend/.venv`
-- 安装/检查后端依赖
-- 安装/检查前端依赖
-- 启动后端与前端窗口
-- 自动打开浏览器访问前端页面
-
-> 首次运行 Pix2Text 时可能需要下载或加载模型，请等待页面右上角状态变为 **就绪**。
+> 首次运行 Pix2Text 时需要下载模型，请等待页面右上角状态变为 **就绪**。
 
 ### 3. 停止服务
 
-双击根目录脚本：
-
 ```text
-stop.bat
+双击 stop.bat
 ```
-
-它会停止前端、后端以及启动器残留进程，并清理端口占用。
 
 ---
 
 ## Docker 启动
 
-### CPU
-
 ```bash
+# CPU 模式
 docker compose --profile cpu up --build
-```
 
-### GPU
-
-```bash
+# GPU 模式
 docker compose --profile gpu up --build
 ```
 
-访问地址：
-
-- 前端：`http://localhost:8080`
-- 后端健康检查：`http://localhost:8000/health`
-- 模型状态：`http://localhost:8000/api/model-status`
+访问：`http://localhost:8080`（前端）| `http://localhost:8000/health`（后端）
 
 ---
 
 ## 本地开发
 
-### 后端
-
 ```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# 后端
+cd backend && python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 前端
+cd frontend && npm install && npm run dev
 ```
-
-### 前端
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-开发环境下默认通过 Vite 代理访问后端，避免跨域问题。
 
 ---
 
@@ -217,59 +169,19 @@ npm run dev
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
 | `APP_DEVICE` | `auto` | `auto` / `cpu` / `cuda` |
-| `DATABASE_URL` | `sqlite+aiosqlite:///./data/history.db` | SQLite 数据库地址 |
-| `MODEL_DIR` | `./models` | 模型缓存目录 |
-| `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080,http://127.0.0.1:8080` | 允许跨域来源 |
-| `RETURN_PREPROCESSED_IMAGE` | `true` | 是否返回预处理图片预览 |
 | `DEFAULT_MODEL_ID` | `pix2text` | 默认模型 ID |
-| `ENABLE_PIX2TEXT` | `true` | 是否启用基础版 Pix2Text |
-| `ENABLE_LATEX_OCR` | `true` | 是否启用高精度版 LaTeX_OCR |
-| `ENABLE_UNI_EQUATION` | `false` | 是否启用专业版 Uni-Equation |
-| `LATEX_OCR_CHECKPOINT` | 空 | 高精度版本地权重路径（可选） |
-| `LATEX_OCR_REPO_ID` | 空 | 高精度版 Hugging Face 仓库 ID（可选） |
-| `UNI_EQUATION_MODEL_NAME` | `wanderkid/unimernet` | Uni-Equation Hugging Face 模型名 |
-| `UNI_EQUATION_CHECKPOINT` | 空 | Uni-Equation 本地权重/模型目录 |
-| `UNI_EQUATION_REPO_ID` | 空 | Uni-Equation Hugging Face 仓库 ID（可选） |
-| `MAX_LOADED_MODELS` | `1` | 同时保留在显存/内存中的模型数量 |
-| `PRELOAD_MODELS` | `pix2text` | 启动时检查/下载的模型列表，逗号分隔 |
-| `PIX2TEX_WEIGHTS_URL` | pix2tex release 地址 | 高精度版 LaTeX_OCR 权重自动下载地址 |
-| `MODEL_DOWNLOAD_TIMEOUT_SEC` | `1800` | 模型下载超时参考配置 |
-| `P2T_MFR_MODEL` | `mfr-1.5` | Pix2Text 公式识别模型版本 |
-| `HF_ENDPOINT` | 空 | HuggingFace 镜像地址，国内用户建议设为 `https://hf-mirror.com` |
-
-### 如何启用 LaTeX_OCR
-
-`LaTeX_OCR` 默认启用（`ENABLE_LATEX_OCR=true`），使用 pix2tex 包内置权重，无需额外配置。
-
-如需使用自定义权重，可在 `.env` 中指定：
-
-```env
-LATEX_OCR_CHECKPOINT=./models/latex_ocr/weights.pth
-```
-
-或从 Hugging Face 仓库下载：
-
-```env
-LATEX_OCR_REPO_ID=your-org/your-latex-ocr-model
-```
-
-### 如何启用 Uni-Equation
-
-`Uni-Equation` 默认关闭（`ENABLE_UNI_EQUATION=false`），显存建议 6GB+。
-
-在后端 `.env` 中配置即可启用：
-
-```env
-ENABLE_UNI_EQUATION=true
-```
-
-首次启动时会自动从 HuggingFace 下载默认模型 `wanderkid/unimernet`。国内用户建议设置 `HF_ENDPOINT=https://hf-mirror.com`。
-
-### 字体与导出说明
-
-预览和导出默认使用 `Times New Roman`。由于 KaTeX 自带数学字体样式，项目已对预览区和导出容器增加字体覆盖规则，确保选择 Times New Roman、Cambria Math、STIX Two Math 等选项时，公式主体也会跟随切换。
-
-如果系统没有安装某个字体，浏览器会自动回退到字体栈中的下一个字体。建议 Windows 用户使用 `Times New Roman` 或 `Cambria Math`，科研排版可安装 `STIX Two Math` 或 `Latin Modern Math`。
+| `ENABLE_PIX2TEXT` | `true` | 启用基础版 Pix2Text |
+| `ENABLE_LATEX_OCR` | `true` | 启用高精度版 LaTeX_OCR |
+| `ENABLE_UNI_EQUATION` | `false` | 启用专业版 Uni-Equation |
+| `UNI_EQUATION_MODEL_NAME` | `wanderkid/unimernet` | Uni-Equation 模型名 |
+| `MAX_LOADED_MODELS` | `1` | 显存中最大模型数 |
+| `PRELOAD_MODELS` | `pix2text` | 启动时预加载模型 |
+| `P2T_MFR_MODEL` | `mfr-1.5` | Pix2Text 模型版本 |
+| `HF_ENDPOINT` | 空 | HuggingFace 镜像地址 |
+| `ADMIN_PASSWORD` | 空 | 管理员密码（设置后需登录才能修改高级设置） |
+| `DATABASE_URL` | `sqlite+aiosqlite:///./data/history.db` | 数据库地址 |
+| `MODEL_DIR` | `./models` | 模型缓存目录 |
+| `CORS_ORIGINS` | `localhost:5173,...` | 允许跨域来源 |
 
 ### 前端
 
@@ -281,26 +193,19 @@ ENABLE_UNI_EQUATION=true
 
 ## API 概览
 
-统一响应格式：
+统一响应格式：`{ "code": 200, "message": "success", "data": {} }`
 
-```json
-{ "code": 200, "message": "success", "data": {} }
-```
-
-### 主要接口
-
-- `GET /api/models`
-- `GET /api/models/events`（SSE 模型状态流）
-- `POST /api/models/{model_id}/activate`
-- `GET /api/model-status`
-- `POST /api/ocr`
-  表单字段：`file`、`preprocess`、`model_id`
-- `POST /api/recognize`（兼容旧接口）
-  表单字段：`file`、`preprocess`、`model_id`
-- `GET /api/history`
-- `POST /api/history`
-- `DELETE /api/history`
-- `DELETE /api/history/{id}`
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/api/models` | 获取模型列表 |
+| GET | `/api/models/events` | SSE 模型状态流 |
+| POST | `/api/models/{id}/activate` | 切换模型 |
+| POST | `/api/ocr` | 识别公式（file, preprocess, model_id） |
+| GET | `/api/history` | 获取历史记录 |
+| DELETE | `/api/history` | 清空历史 |
+| GET | `/api/settings` | 获取设置 |
+| PUT | `/api/settings` | 保存设置 |
+| POST | `/api/auth/admin` | 管理员登录 |
 
 ---
 
@@ -310,32 +215,22 @@ ENABLE_UNI_EQUATION=true
 LocalMathOCR/
 ├─ backend/
 │  ├─ app/
-│  ├─ models/
-│  ├─ data/
+│  │  ├─ routers/        # API 路由
+│  │  ├─ services/        # OCR 引擎、数据库、模型管理
+│  │  └─ config.py        # 环境变量配置
 │  └─ requirements.txt
 ├─ frontend/
 │  ├─ src/
-│  ├─ index.html
+│  │  ├─ components/      # UI 组件
+│  │  ├─ stores/          # Zustand 状态管理
+│  │  ├─ services/        # API 调用层
+│  │  └─ hooks/           # 自定义 Hooks
 │  └─ package.json
-├─ docs/
-│  ├─ preview-main.png
-│  ├─ preview-mobile.png
-│  ├─ preview-export.png
-│  ├─ preview-model-selector.svg
-│  └─ model-lifecycle.svg
-├─ start.bat
-├─ stop.bat
+├─ docs/                  # 预览截图
+├─ start.bat              # Windows 一键启动
+├─ stop.bat               # Windows 停止服务
 └─ README.md
 ```
-
----
-
-## 注意事项
-
-- 本项目不调用外部识别 API；首次运行可能下载开源模型权重。
-- 建议在可信网络环境下提前缓存模型到 `MODEL_DIR`。
-- 识别准确率与图片清晰度关系较大，建议使用白底黑字、边缘完整、分辨率足够的截图。
-- 若后端未就绪，前端会提示无法连接，请先确认 `http://127.0.0.1:8000/health` 是否可访问。
 
 ---
 
