@@ -131,6 +131,11 @@ def _check_gpu(device: str) -> None:
              "https://download.pytorch.org/whl/cu128"],
             check=True, timeout=1200,
         )
+    print("[GPU] Ensuring onnxruntime-gpu is installed for P2T GPU acceleration...")
+    subprocess.run(
+        [py, "-m", "pip", "install", "--upgrade", "onnxruntime-gpu"],
+        capture_output=True, timeout=300,
+    )
 
 
 def _install_frontend_deps() -> None:

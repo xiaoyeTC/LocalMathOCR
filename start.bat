@@ -11,7 +11,7 @@ echo ========================================
 echo.
 echo Select run mode:
 echo   [1] CPU mode - best compatibility, slower
-echo   [2] GPU mode - requires NVIDIA GPU/CUDA, faster
+echo   [2] GPU mode - installs CUDA PyTorch + onnxruntime-gpu, faster
 echo.
 choice /C 12 /N /M "Input 1 or 2: "
 if errorlevel 2 (
