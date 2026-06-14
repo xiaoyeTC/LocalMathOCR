@@ -18,11 +18,11 @@
   <g filter="url(#shadow)">
     <rect x="50" y="140" width="340" height="360" rx="22" fill="#fff" stroke="#2563eb" stroke-width="3"/>
     <circle cx="82" cy="178" r="10" fill="#22c55e"/>
-    <text x="104" y="186" class="card-title">基础版 Pix2Tex</text>
+    <text x="104" y="186" class="card-title">基础版 Pix2Text</text>
     <rect x="72" y="216" width="106" height="28" rx="14" fill="#dcfce7"/>
-    <text x="90" y="235" class="tag" fill="#166534">&lt; 2GB VRAM</text>
-    <text x="72" y="282" class="small">速度极快，支持 CPU 运行。</text>
-    <text x="72" y="306" class="small">适合简单单行公式和清晰截图。</text>
+    <text x="90" y="235" class="tag" fill="#166534">&lt; 1GB VRAM</text>
+    <text x="72" y="282" class="small">轻量高效，支持 CPU 运行。</text>
+    <text x="72" y="306" class="small">基于 P2T MFR 模型，适合单行公式。</text>
     <line x1="72" y1="334" x2="348" y2="334" stroke="#e2e8f0"/>
     <text x="72" y="366" class="small">擅长场景</text>
     <text x="72" y="392" class="small">快速识别、轻量部署、低显存环境</text>
@@ -33,9 +33,9 @@
   <g filter="url(#shadow)">
     <rect x="430" y="140" width="340" height="360" rx="22" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
     <circle cx="462" cy="178" r="10" fill="#3b82f6"/>
-    <text x="484" y="186" class="card-title">高精度 LaTeX_OCR</text>
+    <text x="484" y="186" class="card-title">高精度版 (LaTeX_OCR)</text>
     <rect x="452" y="216" width="116" height="28" rx="14" fill="#dbeafe"/>
-    <text x="470" y="235" class="tag" fill="#1e40af">4-6GB VRAM</text>
+    <text x="470" y="235" class="tag" fill="#1e40af">2GB+ VRAM</text>
     <text x="452" y="282" class="small">准确率提升，推荐 GPU 运行。</text>
     <text x="452" y="306" class="small">适合上下标、希腊字母和常规复杂公式。</text>
     <line x1="452" y1="334" x2="728" y2="334" stroke="#e2e8f0"/>
@@ -50,7 +50,7 @@
     <circle cx="842" cy="178" r="10" fill="#94a3b8"/>
     <text x="864" y="186" class="card-title">专业版 Uni-Equation</text>
     <rect x="832" y="216" width="112" height="28" rx="14" fill="#fef3c7"/>
-    <text x="850" y="235" class="tag" fill="#92400e">&gt; 8GB VRAM</text>
+    <text x="850" y="235" class="tag" fill="#92400e">6GB+ VRAM</text>
     <text x="832" y="282" class="small">复杂结构克星，大显存环境推荐。</text>
     <text x="832" y="306" class="small">面向大型矩阵、多层分式和长公式。</text>
     <line x1="832" y1="334" x2="1108" y2="334" stroke="#e2e8f0"/>
