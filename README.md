@@ -19,24 +19,21 @@
 
 ## 项目预览
 
-<table>
-  <tr>
-    <td align="center"><b>桌面端主界面</b></td>
-    <td align="center"><b>移动端适配</b></td>
-  </tr>
-  <tr>
-    <td><img src="docs/preview-main.png" width="100%"></td>
-    <td><img src="docs/preview-mobile.png" width="100%"></td>
-  </tr>
-  <tr>
-    <td align="center"><b>导出与字体选择</b></td>
-    <td align="center"><b>设置面板</b></td>
-  </tr>
-  <tr>
-    <td><img src="docs/preview-export.png" width="100%"></td>
-    <td><img src="docs/preview-settings.png" width="100%"></td>
-  </tr>
-</table>
+### 主界面（桌面端）
+
+![主界面](docs/preview-main.png)
+
+### 移动端适配
+
+![移动端](docs/preview-mobile.png)
+
+### 导出与字体选择
+
+![导出](docs/preview-export.png)
+
+### 设置面板
+
+![设置](docs/preview-settings.png)
 
 ### 架构设计
 
