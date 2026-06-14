@@ -64,22 +64,22 @@ export function ImageCropper({ imageSrc, onConfirm, onCancel }: Props) {
   }, [completedCrop, onConfirm, onCancel]);
 
   return (
-    <section className="rounded-3xl border border-blue-300 bg-white p-6 shadow-sm dark:border-blue-900 dark:bg-slate-900">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">框选公式区域</h3>
+    <section className="rounded-3xl border border-blue-300 bg-white p-4 shadow-sm dark:border-blue-900 dark:bg-slate-900 sm:p-6">
+      <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="text-base font-bold text-slate-900 dark:text-white sm:text-lg">框选公式区域</h3>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={handleConfirm}
             disabled={processing || !completedCrop}
-            className="rounded-xl bg-primary px-5 py-2 font-medium text-white shadow disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="flex-1 rounded-xl bg-primary px-4 py-2 font-medium text-white shadow disabled:cursor-not-allowed disabled:bg-slate-400 sm:flex-none sm:px-5"
           >
             {processing ? '处理中...' : '确认框选'}
           </button>
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-xl border border-slate-300 px-5 py-2 font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="flex-1 rounded-xl border border-slate-300 px-4 py-2 font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800 sm:flex-none sm:px-5"
           >
             取消
           </button>
