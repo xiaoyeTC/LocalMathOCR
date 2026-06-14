@@ -1,5 +1,39 @@
 # 更新日志
 
+## [2.4.0]
+
+### 新增
+
+#### 设置面板
+- 新增右侧滑入式设置面板，点击 Header ⚙️ 按钮打开。
+- 用户设置：默认模型（下拉选择）、轻度预处理开关。
+- 管理员设置：模型启用/禁用、预加载模型、最大加载数、下载超时、P2T 模型版本、HF 镜像地址。
+- 运行模式只读展示（auto/cpu/cuda）。
+- 设置保存到 `backend/.env`，部分设置需重启后端生效。
+- 管理员密码通过 `ADMIN_PASSWORD` 环境变量配置，未设置时管理员设置不显示。
+
+#### Header GitHub 链接
+- Header 新增 GitHub 图标按钮，点击跳转项目仓库。
+
+### 修复
+
+#### SQLite 迁移
+- `init_db()` 启动时自动检查 `session_id` 列是否存在，不存在则 `ALTER TABLE` 添加，解决旧数据库升级问题。
+
+#### 设置保存
+- 修复 `PUT /api/settings` 的 `isinstance(bool(val))` 语法错误（应为 `isinstance(val, bool)`）。
+
+#### 管理员权限
+- 未设置 `ADMIN_PASSWORD` 时，`_verify_admin()` 返回 `false`，管理员设置不再默认显示。
+
+### 优化
+
+#### 布局重构
+- SettingsPanel 从 Header 内部移至 App 顶层渲染，解决 `sticky` 与 `fixed` 定位冲突。
+- 预处理开关从 UploadZone 移至设置面板。
+- Header 主题按钮（🎨）与设置按钮（⚙️）分离。
+- README 预览截图改为独立小节，新增设置面板截图。
+
 ## [2.3.2]
 
 ### 修复
