@@ -39,20 +39,20 @@ export function Header({ modelStatus, models, selectedModelId, dark, onToggleDar
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur dark:border-slate-800 dark:bg-slate-950/85">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-lg font-black text-white">L</div>
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2 sm:px-4 sm:py-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-base font-black text-white sm:h-9 sm:w-9 sm:text-lg">L</div>
           <div>
-            <div className="font-bold text-slate-900 dark:text-white">LocalMathOCR</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">本地数学公式识别</div>
+            <div className="text-sm font-bold text-slate-900 dark:text-white sm:text-base">LocalMathOCR</div>
+            <div className="hidden text-xs text-slate-500 dark:text-slate-400 sm:block">本地数学公式识别</div>
           </div>
         </div>
         <nav className="hidden items-center gap-6 text-sm text-slate-600 dark:text-slate-300 md:flex">
           <a href="#recognize" className="hover:text-primary">识别</a>
           <a href="#editor" className="hover:text-primary">编辑器</a>
         </nav>
-        <div className="flex items-center gap-2">
-          <button onClick={onToggleDark} className="rounded-xl border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:text-slate-100">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <button onClick={onToggleDark} className="rounded-xl border border-slate-200 px-2.5 py-1.5 text-sm dark:border-slate-700 dark:text-slate-100 sm:px-3 sm:py-2">
             {dark ? '☀️' : '🌙'}
           </button>
 
@@ -66,7 +66,7 @@ export function Header({ modelStatus, models, selectedModelId, dark, onToggleDar
             </button>
 
             {showSettings && (
-              <div className="absolute right-0 top-full z-40 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
+              <div className="absolute right-0 top-full z-40 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900 sm:w-64">
                 <div className="p-4">
                   <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">模型选择器样式</div>
                   <div className="flex gap-2">
@@ -110,13 +110,13 @@ export function Header({ modelStatus, models, selectedModelId, dark, onToggleDar
             )}
           </div>
 
-          <div className={`hidden items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium sm:flex ${isActive ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'}`} title={modelStatus.message}>
-            <span className={`inline-block h-2 w-2 rounded-full ${statusClass}`} />
-            <span>{modelName}</span>
-            <span className="text-slate-400 dark:text-slate-500">·</span>
+          <div className={`flex items-center gap-1.5 rounded-full border px-2 py-1.5 text-xs font-medium sm:gap-2 sm:px-3 sm:py-2 ${isActive ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'}`} title={modelStatus.message}>
+            <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${statusClass}`} />
+            <span className="hidden sm:inline">{modelName}</span>
+            <span className="hidden text-slate-400 dark:text-slate-500 sm:inline">·</span>
             <span>{label}</span>
-            <span className="text-slate-400 dark:text-slate-500">·</span>
-            <span>{deviceLabel}</span>
+            <span className="hidden text-slate-400 dark:text-slate-500 sm:inline">·</span>
+            <span className="hidden sm:inline">{deviceLabel}</span>
           </div>
         </div>
       </div>

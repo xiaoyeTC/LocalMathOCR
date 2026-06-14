@@ -9,13 +9,13 @@ type Props = { onInsert: (snippet: string) => void };
 
 export function SymbolPanel({ onInsert }: Props) {
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <h3 className="mb-4 font-bold text-slate-900 dark:text-white">常用符号面板</h3>
-      <div className="space-y-4">
+    <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+      <h3 className="mb-3 font-bold text-slate-900 dark:text-white sm:mb-4">常用符号面板</h3>
+      <div className="space-y-3 sm:space-y-4">
         {groups.map((group) => (
           <div key={group.title}>
-            <div className="mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400">{group.title}</div>
-            <div className="flex flex-wrap gap-2">
+            <div className="mb-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 sm:mb-2">{group.title}</div>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {group.items.map((item) => (
                 <button
                   key={item}

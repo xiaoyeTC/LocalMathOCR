@@ -19,9 +19,13 @@
 
 ## 项目预览
 
-### 主界面
+### 主界面（桌面端）
 
 ![LocalMathOCR 主界面](docs/preview-main.png)
+
+### 移动端适配
+
+![LocalMathOCR 移动端](docs/preview-mobile.png)
 
 ### 导出与字体选择
 
@@ -50,6 +54,7 @@
 - **导出能力**：支持 PNG / SVG 导出，默认 Times New Roman，并可切换 Cambria Math、STIX、Latin Modern 等字体
 - **历史记录**：本地 SQLite 持久化，支持回显、删除和清空
 - **主题定制**：8 种预设配色方案，支持卡片式 / 下拉菜单式两种模型选择器风格
+- **移动端适配**：响应式布局，手机端可正常使用全部核心功能
 - **双端开发体验**：后端 FastAPI + 前端 Vite，结构清晰，便于二次开发
 
 ---
@@ -76,27 +81,30 @@
 
 ### 前端
 
-- React 18
-- TypeScript
-- Vite
-- Tailwind CSS
-- Zustand
-- CodeMirror
-- KaTeX
-- react-image-crop
-- html2canvas
+| 技术 | 说明 |
+| --- | --- |
+| [React 18](https://github.com/facebook/react) | UI 框架 |
+| [TypeScript](https://github.com/microsoft/TypeScript) | 类型安全 |
+| [Vite 6](https://github.com/vitejs/vite) | 构建工具 |
+| [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) | 原子化 CSS |
+| [Zustand](https://github.com/pmndrs/zustand) | 轻量状态管理 |
+| [CodeMirror](https://github.com/codemirror/dev) | 代码编辑器 |
+| [KaTeX](https://github.com/KaTeX/KaTeX) | LaTeX 数学公式渲染 |
+| [react-image-crop](https://github.com/DominicTobias/react-image-crop) | 图片裁剪 |
 
 ### 后端
 
-- FastAPI
-- Uvicorn
-- pix2text
-- pix2tex（仅 LaTeX_OCR 使用）
-- PyTorch
-- Transformers / Hugging Face Hub（可选，用于 Uni-Equation 等大模型）
-- OpenCV
-- Pillow
-- SQLite + aiosqlite
+| 技术 | 说明 |
+| --- | --- |
+| [FastAPI](https://github.com/tiangolo/fastapi) | Web 框架 |
+| [Pix2Text](https://github.com/breezedeus/Pix2Text) | 基础版公式识别（MFR 1.5 ONNX） |
+| [pix2tex (LaTeX-OCR)](https://github.com/lukas-blecher/LaTeX-OCR) | 高精度版公式识别 |
+| [Uni-MER](https://github.com/opendatalab/Uni-MER) | 专业版公式识别（可选） |
+| [PyTorch](https://github.com/pytorch/pytorch) | 深度学习框架 |
+| [Transformers](https://github.com/huggingface/transformers) | HuggingFace 模型加载 |
+| [OpenCV](https://github.com/opencv/opencv) | 图像预处理 |
+| [Pillow](https://github.com/python-pillow/Pillow) | 图像读写 |
+| [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy) | 数据库 ORM |
 
 ---
 
@@ -311,6 +319,7 @@ LocalMathOCR/
 │  └─ package.json
 ├─ docs/
 │  ├─ preview-main.png
+│  ├─ preview-mobile.png
 │  ├─ preview-export.png
 │  ├─ preview-model-selector.svg
 │  └─ model-lifecycle.svg

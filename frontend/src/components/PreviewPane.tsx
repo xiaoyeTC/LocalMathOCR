@@ -228,11 +228,11 @@ export function PreviewPane({ latex, onToast }: Props) {
   }
 
   return (
-    <section className="flex min-h-[420px] flex-col rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <section className="flex min-h-[280px] flex-col rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:min-h-[420px]">
       <style>{'.formula-preview-font .katex, .formula-preview-font .katex * { font-family: var(--formula-font-family) !important; }'}</style>
-      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 dark:border-slate-800 sm:px-5 sm:py-4">
         <h3 className="font-bold text-slate-900 dark:text-white">实时预览</h3>
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
           <select
             value={exportFont}
             onChange={(event) => setExportFont(event.target.value)}

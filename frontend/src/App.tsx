@@ -207,15 +207,15 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <Header modelStatus={modelStatus} models={models} selectedModelId={selectedModelId} dark={dark} onToggleDark={() => setDark((value) => !value)} />
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        <section className="mb-8 text-center">
-          <p className="text-sm font-semibold text-primary">100% 本地推理 · 零外部识别 API 成本</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-950 dark:text-white md:text-5xl">本地智能数学公式识别</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-300">上传、拖拽或粘贴公式截图，按场景选择本地 OCR 模型生成 LaTeX，并实时渲染预览。</p>
+      <main className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-8">
+        <section className="mb-4 text-center sm:mb-8">
+          <p className="text-xs font-semibold text-primary sm:text-sm">100% 本地推理 · 零外部识别 API 成本</p>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-950 dark:text-white sm:mt-3 sm:text-4xl md:text-5xl">本地智能数学公式识别</h1>
+          <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300 sm:mt-4 sm:text-base">上传、拖拽或粘贴公式截图，按场景选择本地 OCR 模型生成 LaTeX，并实时渲染预览。</p>
         </section>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-          <div className="space-y-6">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_320px]">
+          <div className="space-y-4 sm:space-y-6">
             {themeMode === 'modern' ? (
               <ModelSelectorDropdown models={models} selectedModelId={selectedModelId} disabled={loading} onChange={handleSelectModel} />
             ) : (
@@ -227,7 +227,7 @@ export default function App() {
               <UploadZone modelStatus={modelStatus} loading={loading} preprocess={preprocess} onTogglePreprocess={setPreprocess} onFile={handleFile} />
             )}
             <ConfidenceBanner confidence={confidence} />
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
               <LatexEditor value={latex} onChange={setLatex} onCopy={copyLatex} />
               <PreviewPane latex={latex} onToast={showToast} />
             </div>
