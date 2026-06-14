@@ -55,7 +55,7 @@ export default function App() {
   const applyModelPayload = useCallback((payload: ModelsEventPayload) => {
     setModels(payload.models);
     const active = payload.models.find((model) => model.active) || payload.models.find((model) => model.id === payload.active_model_id);
-    const selected = active || payload.models.find((model) => model.id === selectedModelId) || payload.models.find((model) => model.is_default) || payload.models[0];
+    const selected = active || payload.models.find((model) => model.is_default) || payload.models[0];
     if (selected) {
       setSelectedModelId(selected.id);
       setModelStatus({
@@ -67,7 +67,7 @@ export default function App() {
         progress: selected.progress,
       });
     }
-  }, [selectedModelId, setModelStatus, setModels, setSelectedModelId]);
+  }, [setModelStatus, setModels, setSelectedModelId]);
 
   const refreshModels = useCallback(async () => {
     try {
@@ -112,17 +112,14 @@ export default function App() {
       return;
     }
     setSelectedModelId(modelId);
-    setLoading(true);
     try {
       await activateModel(modelId);
       showToast(`已切换到 ${target.display_name}`);
       await refreshModels();
     } catch (error) {
       showToast(error instanceof Error ? error.message : '模型切换失败');
-    } finally {
-      setLoading(false);
     }
-  }, [models, refreshModels, setLoading, setSelectedModelId, showToast]);
+  }, [models, refreshModels, setSelectedModelId, showToast]);
 
   const runRecognition = useCallback(async (file: File, modelId: string) => {
     const result = await recognizeFormula(file, preprocess, modelId);
@@ -150,25 +147,32 @@ export default function App() {
   const handleCroppedFile = useCallback(async (file: File) => {
     setCropImageSrc(null);
     setLoading(true);
+    const targetModel = models.find((m) => m.id === selectedModelId);
+    const useModelId = targetModel?.status === 'ready' ? selectedModelId : FALLBACK_MODEL_ID;
+    if (useModelId !== selectedModelId) {
+      showToast(`所选模型未就绪，使用基础版识别`);
+      setSelectedModelId(useModelId);
+    }
     try {
-      await runRecognition(file, selectedModelId);
+      await runRecognition(file, useModelId);
     } catch (error) {
       if (error instanceof ApiError && error.fallbackModelId) {
         setSelectedModelId(error.fallbackModelId);
-        showToast('所选模型不可用，已回退到基础版并重试');
+        showToast('识别失败，已回退到基础版重试');
         try {
-          await activateModel(error.fallbackModelId || FALLBACK_MODEL_ID);
           await runRecognition(file, error.fallbackModelId || FALLBACK_MODEL_ID);
         } catch (fallbackError) {
           showToast(fallbackError instanceof Error ? fallbackError.message : '基础版重试失败');
         }
+      } else if (error instanceof ApiError && error.status === 503) {
+        showToast('模型正在加载中，请稍后再试');
       } else {
         showToast(error instanceof Error ? error.message : '识别失败');
       }
     } finally {
       setLoading(false);
     }
-  }, [runRecognition, selectedModelId, setLoading, setSelectedModelId, showToast]);
+  }, [models, runRecognition, selectedModelId, setLoading, setSelectedModelId, showToast]);
 
   const handleCancelCrop = useCallback(() => {
     if (cropImageSrc) URL.revokeObjectURL(cropImageSrc);

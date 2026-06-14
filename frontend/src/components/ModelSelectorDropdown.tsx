@@ -92,6 +92,19 @@ export function ModelSelectorDropdown({ models, selectedModelId, disabled, onCha
           <svg className={`h-5 w-5 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
         </button>
 
+        {selectedDisplay && selectedDisplay.status === 'downloading' && (
+          <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/30">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-amber-700 dark:text-amber-300">{selectedDisplay.display_name}</span>
+              <span className="text-amber-600 dark:text-amber-400">{selectedDisplay.progress}%</span>
+            </div>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-amber-200 dark:bg-amber-800">
+              <div className="h-full rounded-full bg-amber-500 transition-all" style={{ width: `${selectedDisplay.progress}%` }} />
+            </div>
+            {selectedDisplay.message && <p className="mt-1 text-xs text-amber-600 dark:text-amber-400 truncate">{selectedDisplay.message}</p>}
+          </div>
+        )}
+
         {open && (
           <div className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
             {models.map((rawModel) => {
@@ -123,6 +136,11 @@ export function ModelSelectorDropdown({ models, selectedModelId, disabled, onCha
                         {statusLabel(model)}
                       </span>
                     </div>
+                    {model.status === 'downloading' && (
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${model.progress}%` }} />
+                      </div>
+                    )}
                     {model.strengths.length > 0 && (
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {model.strengths.map((s) => (

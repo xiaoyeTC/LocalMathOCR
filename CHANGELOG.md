@@ -1,5 +1,31 @@
 # 更新日志
 
+## [2.3.2]
+
+### 修复
+
+#### P2T 引擎优化
+- P2T 引擎改用 `LatexOCR.recognize()` 直接调用，移除 `TextFormulaOCR` 包装，消除 `text_ocr must not be None` 警告。
+- GPU 模式下自动检测 `CUDAExecutionProvider` 是否可用，不可用时回退 CPU 并提示。
+
+#### Uni-Equation 权重检查
+- `weights_exist()` 改为检查具体模型文件（`pytorch_model.bin`、`model.safetensors` 等），不再仅检查目录是否存在。
+- `download_sync()` 发现目录存在但权重不完整时，先删除残留目录再重新下载。
+- 默认仓库更新为 `wanderkid/unimernet`。
+
+#### 前端模型状态与错误处理
+- `applyModelPayload` 移除 `selectedModelId` 依赖，SSE 连接不再因模型切换而重建。
+- `handleSelectModel` 移除 `setLoading`，切换模型不再影响上传按钮状态。
+- `handleCroppedFile` 识别前检查模型是否就绪，未就绪时自动降级到基础版。
+- 404 错误回退重试，503 错误提示等待，不再误触发回退。
+
+#### 下拉菜单进度显示
+- 下拉菜单选项和触发按钮新增下载进度条。
+- 选中模型正在下载/加载时，在下拉按钮下方显示进度卡片。
+
+#### 配置修复
+- `HF_ENDPOINT` 新增为合法配置项，从 `.env` 读取后自动设置到环境变量。
+
 ## [2.3.1]
 
 ### 优化

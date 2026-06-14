@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -28,6 +29,7 @@ class Settings(BaseSettings):
     latex_ocr_repo_id: str | None = None
     uni_equation_repo_id: str | None = None
     p2t_mfr_model: str = "mfr-1.5"
+    hf_endpoint: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
@@ -45,4 +47,6 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     settings = Settings()
     settings.model_dir.mkdir(parents=True, exist_ok=True)
+    if settings.hf_endpoint:
+        os.environ.setdefault("HF_ENDPOINT", settings.hf_endpoint)
     return settings

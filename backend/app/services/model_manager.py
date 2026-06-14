@@ -94,7 +94,7 @@ class ModelManager:
             factory=factory,
             state="unavailable" if not enabled else "ready",
             progress=0 if not enabled else 100,
-            message="未启用" if not enabled else "可选择，点击后按需下载/加载",
+            message="未启用" if not enabled else "就绪，点击切换后按需加载",
         )
 
     async def initialize(self) -> None:
@@ -132,7 +132,7 @@ class ModelManager:
                 return
             runtime.state = "downloading"
             runtime.progress = 0
-            runtime.message = "开始下载权重"
+            runtime.message = "正在下载模型权重"
             await self.broadcast()
             await runtime.engine.ensure_weights_async(self._progress_callback(model_id))
             runtime.state = "ready"
@@ -162,8 +162,8 @@ class ModelManager:
 
                 await self.prepare(selected_id)
                 runtime.state = "downloading"
-                runtime.message = "正在加载到显存"
-                runtime.progress = 100
+                runtime.message = "正在加载模型到显存"
+                runtime.progress = 95
                 await self.broadcast()
                 await runtime.engine.load_async()
                 if runtime.engine.status != "ready":
@@ -287,7 +287,7 @@ class ModelManager:
         if runtime.enabled:
             runtime.state = "ready"
             runtime.progress = 100
-            runtime.message = "权重已就绪，未加载到显存"
+            runtime.message = "已卸载，权重已就绪"
         else:
             self._set_unavailable(runtime, "未启用")
 

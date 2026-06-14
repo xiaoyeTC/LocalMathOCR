@@ -204,7 +204,6 @@ class Pix2TextEngine(BaseOCREngine):
             self.device = self._resolve_device()
             self._resolve_model_info()
             from pix2text.latex_ocr import LatexOCR
-            from pix2text.text_formula_ocr import TextFormulaOCR
 
             model_dir = str(self._model_dir())
 
@@ -226,12 +225,7 @@ class Pix2TextEngine(BaseOCREngine):
                 model_dir=model_dir,
                 more_model_configs=more_model_configs or None,
             )
-            self._model = TextFormulaOCR(
-                text_ocr=None,
-                mfd=None,
-                latex_ocr=latex_ocr,
-                enable_formula=True,
-            )
+            self._model = latex_ocr
             self.status = "ready"
             self.message = f"{self.model_id} loaded on {self.device}"
         except Exception as exc:
@@ -242,8 +236,8 @@ class Pix2TextEngine(BaseOCREngine):
     def _predict_sync(self, image: Image.Image, variant: str = "default") -> OCRPrediction:
         started = time.perf_counter()
         try:
-            result = self._model.recognize_formula(image, return_text=True)
-            latex = result if isinstance(result, str) else str(result)
+            result = self._model.recognize(image)
+            latex = result.get('text', '') if isinstance(result, dict) else str(result)
             return OCRPrediction(
                 latex=latex.strip(),
                 inference_time_ms=int((time.perf_counter() - started) * 1000),
@@ -414,14 +408,25 @@ class UniEquationEngine(BaseOCREngine):
     def _model_source(self) -> str | None:
         if self.local_path:
             return str(Path(self.local_path).expanduser())
-        if self._repo_dir().exists() and any(self._repo_dir().iterdir()):
-            return str(self._repo_dir())
+        repo_dir = self._repo_dir()
+        if repo_dir.exists():
+            for f in repo_dir.iterdir():
+                if f.name in self.MODEL_WEIGHT_FILES:
+                    return str(repo_dir)
         return self.repo_id
+
+    MODEL_WEIGHT_FILES = {'pytorch_model.bin', 'model.safetensors', 'tf_model.h5', 'model.ckpt.index', 'flax_model.msgpack'}
 
     def weights_exist(self) -> bool:
         if self.local_path:
             return Path(self.local_path).expanduser().exists()
-        return self._repo_dir().exists() and any(self._repo_dir().iterdir())
+        repo_dir = self._repo_dir()
+        if not repo_dir.exists():
+            return False
+        for f in repo_dir.iterdir():
+            if f.name in self.MODEL_WEIGHT_FILES:
+                return True
+        return False
 
     def download_sync(self, progress_cb: ProgressCallback | None = None) -> None:
         if self.local_path:
@@ -432,9 +437,13 @@ class UniEquationEngine(BaseOCREngine):
             raise FileNotFoundError(f"UNI_EQUATION_CHECKPOINT does not exist: {self.local_path}")
         if not self.repo_id:
             raise RuntimeError("UNI_EQUATION_REPO_ID or UNI_EQUATION_MODEL_NAME must be configured")
+        repo_dir = self._repo_dir()
+        if repo_dir.exists() and not self.weights_exist():
+            import shutil
+            shutil.rmtree(str(repo_dir), ignore_errors=True)
         if progress_cb:
             progress_cb(5, "downloading uni_equation snapshot")
-        _hf_download_with_mirror(self.repo_id, str(self._repo_dir()), progress_cb)
+        _hf_download_with_mirror(self.repo_id, str(repo_dir), progress_cb)
         if progress_cb:
             progress_cb(100, "uni_equation snapshot downloaded")
 
