@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
 
-from app.config import get_settings
+from app.config import get_settings, clear_settings_cache
 from app.routers.common import success
 
 router = APIRouter(prefix="/api", tags=["settings"])
@@ -34,7 +34,7 @@ def _verify_admin(request: Request) -> bool:
     return True
 
 
-USER_SETTINGS = {"preprocess", "default_model_id"}
+USER_SETTINGS = {"preprocess", "enable_formula_preprocessing", "default_model_id"}
 
 ADMIN_SETTINGS = {
     "app_device", "enable_pix2text", "enable_latex_ocr", "enable_uni_equation",
@@ -67,6 +67,7 @@ async def get_all_settings(request: Request):
 
     data = {
         "preprocess": settings.return_preprocessed_image,
+        "enable_formula_preprocessing": settings.enable_formula_preprocessing,
         "default_model_id": settings.default_model_id,
     }
 
@@ -127,5 +128,6 @@ async def update_settings(request: Request):
 
     env_path.parent.mkdir(parents=True, exist_ok=True)
     env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    clear_settings_cache()
 
     return success({"updated": list(updates.keys())})

@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     uni_equation_repo_id: str | None = None
     p2t_mfr_model: str = "mfr-1.5"
     hf_endpoint: str = ""
+    enable_formula_preprocessing: bool = False
+    admin_password: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
@@ -50,3 +52,8 @@ def get_settings() -> Settings:
     if settings.hf_endpoint:
         os.environ.setdefault("HF_ENDPOINT", settings.hf_endpoint)
     return settings
+
+
+def clear_settings_cache() -> None:
+    """清除 settings 缓存，使下次 get_settings() 重新读取 .env。"""
+    get_settings.cache_clear()

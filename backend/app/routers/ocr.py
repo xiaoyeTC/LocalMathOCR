@@ -5,6 +5,7 @@ from app.config import get_settings
 from app.routers.common import get_model_manager, success
 from app.services.db import AsyncSessionLocal, create_history
 from app.services.postprocess import post_processor
+from app.services.formula_preprocessor import FormulaPreprocessor, FormulaPreprocessConfig
 from app.services.preprocess import enhance_formula_image, make_thumbnail_data_url, preprocess_image, read_image
 
 router = APIRouter(prefix="/api", tags=["ocr"])
@@ -116,6 +117,10 @@ async def _recognize_with_model(
             predictions.append(await engine.predict(processed.image, "preprocessed"))
             enhanced_image = enhance_formula_image(original_image)
             predictions.append(await engine.predict(enhanced_image, "enhanced"))
+        if settings.enable_formula_preprocessing:
+            fp = FormulaPreprocessor()
+            fp_result = fp.process(original_image)
+            predictions.append(await engine.predict(fp_result, "formula_preprocessed"))
         prediction = max(predictions, key=lambda item: _latex_score(item.latex))
         return engine.model_id, prediction
 
@@ -129,8 +134,9 @@ async def _recognize_with_model(
     cleaned_latex = post_processor.clean(prediction.latex)
 
     thumbnail = make_thumbnail_data_url(file_bytes)
+    session_id = request.headers.get("X-Session-ID", "default")
     async with AsyncSessionLocal() as session:
-        await create_history(session, cleaned_latex, thumbnail)
+        await create_history(session, cleaned_latex, thumbnail, session_id=session_id)
 
     return success({
         "latex": cleaned_latex,

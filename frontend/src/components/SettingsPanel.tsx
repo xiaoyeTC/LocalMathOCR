@@ -148,6 +148,9 @@ export function SettingsPanel({ onClose }: Props) {
                   <SettingRow label="轻度预处理" desc="对输入图像做灰度化、二值化等处理" icon="🖼️">
                     <Toggle value={!!settings.preprocess} onChange={(v) => setSettings((s) => s ? { ...s, preprocess: v } : s)} />
                   </SettingRow>
+                  <SettingRow label="高级预处理" desc="深色反转、自适应二值化、去噪、倾斜校正" icon="⚙️">
+                    <Toggle value={!!settings.enable_formula_preprocessing} onChange={(v) => setSettings((s) => s ? { ...s, enable_formula_preprocessing: v } : s)} />
+                  </SettingRow>
                   <SettingRow label="运行模式" desc="当前计算运行模式" icon="💻">
                     <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-sm font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300">{String(settings.app_device ?? 'auto')}</span>
                   </SettingRow>
