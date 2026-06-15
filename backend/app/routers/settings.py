@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
 
-from app.config import get_settings, clear_settings_cache
+from app.config import get_settings, clear_settings_cache, _ENV_FILE
 from app.routers.common import success
 
 router = APIRouter(prefix="/api", tags=["settings"])
@@ -16,6 +16,14 @@ TOKEN_TTL = 3600
 
 def _make_token(password: str, session_id: str) -> str:
     return hmac.new(password.encode(), session_id.encode(), hashlib.sha256).hexdigest()
+
+
+def _purge_expired_tokens() -> None:
+    """主动清理过期的管理员 token，防止字典无限增长。"""
+    now = time.time()
+    expired = [t for t, ts in _admin_tokens.items() if now - ts > TOKEN_TTL]
+    for t in expired:
+        del _admin_tokens[t]
 
 
 def _verify_admin(request: Request) -> bool:
@@ -55,6 +63,7 @@ async def admin_login(request: Request):
     if password != settings.admin_password:
         raise HTTPException(status_code=401, detail="密码错误")
 
+    _purge_expired_tokens()
     token = _make_token(settings.admin_password, session_id)
     _admin_tokens[token] = time.time()
     return success({"token": token})
@@ -100,7 +109,9 @@ async def update_settings(request: Request):
     if not updates:
         raise HTTPException(status_code=400, detail="No valid settings to update")
 
-    env_path = Path("backend/.env")
+    _purge_expired_tokens()
+
+    env_path = _ENV_FILE
     lines: list[str] = []
     if env_path.exists():
         lines = env_path.read_text(encoding="utf-8").splitlines()

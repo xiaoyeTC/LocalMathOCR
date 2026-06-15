@@ -1,5 +1,19 @@
 # 更新日志
 
+## [2.5.0]
+
+### 修复
+
+#### 配置管理系统全面修复
+- **`.env` 路径统一**：`config.py` 和 `settings.py` 统一使用绝对路径 `_ENV_FILE` 定位 `.env`，修复因 CWD 不同导致 pydantic 读不到设置、settings router 写入无效文件的严重问题。
+- **字段别名映射**：`return_preprocessed_image` 新增 `alias="preprocess"`，前端发送的 `preprocess` key 与后端字段正确映射，修复 `extra="forbidden"` 导致的 ValidationError。
+- **CORS 动态化**：替换 Starlette `CORSMiddleware` 为 `DynamicCORSMiddleware`，每次请求动态读取 CORS origins，设置面板修改后立即生效。
+- **HF_ENDPOINT 热更新**：`os.environ.setdefault` 改为直接赋值，`hf_endpoint` 修改后无需重启。
+- **Token 主动清理**：新增 `_purge_expired_tokens()`，在管理员登录和设置保存时主动清理过期 token，防止字典无限增长。
+- **未知 .env key 容错**：`SettingsConfigDict` 新增 `extra="ignore"`，旧版残留的环境变量不再导致启动崩溃。
+- **CORS 空 origins 安全修复**：空 `cors_origins` 不再放行所有跨域请求，仅允许同源请求通过。
+- 移除 `settings.py` 中未使用的 `_KEY_ALIASES` 和 `_FIELD_TO_FRONTEND` 死代码。
+
 ## [2.4.2]
 
 ### 新增

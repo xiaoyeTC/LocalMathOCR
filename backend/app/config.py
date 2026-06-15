@@ -6,6 +6,9 @@ from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# 使用绝对路径定位 .env，确保无论 CWD 在哪都能正确读取
+_ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
+
 
 class Settings(BaseSettings):
     app_name: str = "LocalMathOCR"
@@ -14,7 +17,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./data/history.db"
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080,http://127.0.0.1:8080"
     max_upload_mb: int = 10
-    return_preprocessed_image: bool = True
+    return_preprocessed_image: bool = Field(default=True, alias="preprocess")
     default_model_id: str = "pix2text"
     enable_pix2text: bool = True
     enable_latex_ocr: bool = True
@@ -33,7 +36,12 @@ class Settings(BaseSettings):
     enable_formula_preprocessing: bool = False
     admin_password: str = ""
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=str(_ENV_FILE),
+        env_file_encoding="utf-8",
+        extra="ignore",
+        populate_by_name=True,
+    )
 
     @property
     def cors_origin_list(self) -> list[str]:
@@ -50,7 +58,9 @@ def get_settings() -> Settings:
     settings = Settings()
     settings.model_dir.mkdir(parents=True, exist_ok=True)
     if settings.hf_endpoint:
-        os.environ.setdefault("HF_ENDPOINT", settings.hf_endpoint)
+        os.environ["HF_ENDPOINT"] = settings.hf_endpoint
+    elif "HF_ENDPOINT" in os.environ:
+        del os.environ["HF_ENDPOINT"]
     return settings
 
 
