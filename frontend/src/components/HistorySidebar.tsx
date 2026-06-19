@@ -9,9 +9,9 @@ type Props = {
 
 export function HistorySidebar({ history, onSelect, onDelete, onClear }: Props) {
   return (
-    <aside className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h3 className="font-bold text-slate-900 dark:text-white">历史记录</h3>
+    <aside className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+      <div className="mb-3 flex items-center justify-between gap-3 sm:mb-4">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white sm:text-base">历史记录</h3>
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500">{history.length} 条</span>
           <button
@@ -23,7 +23,7 @@ export function HistorySidebar({ history, onSelect, onDelete, onClear }: Props) 
           </button>
         </div>
       </div>
-      <div className="max-h-[620px] space-y-3 overflow-auto pr-1">
+      <div className="max-h-[400px] space-y-2 overflow-auto pr-1 sm:max-h-[620px] sm:space-y-3">
         {history.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">暂无识别历史</p>}
         {history.map((item) => (
           <div key={item.id} className="rounded-2xl border border-slate-200 p-3 dark:border-slate-800">

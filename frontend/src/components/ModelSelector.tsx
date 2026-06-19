@@ -42,7 +42,7 @@ function displayModel(model: OcrModelMetadata) {
 export function ModelSelector({ models, selectedModelId, disabled, onChange }: Props) {
   if (models.length === 0) {
     return (
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
         <div className="text-sm font-semibold text-slate-900 dark:text-white">模型选择</div>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">正在加载可用模型列表...</p>
       </section>
