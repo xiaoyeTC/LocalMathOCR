@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
@@ -38,11 +38,140 @@ function getCroppedBlob(image: HTMLImageElement, crop: PixelCrop): Promise<Blob>
   });
 }
 
+const MAGNIFIER_SIZE = 120;
+const MAGNIFIER_ZOOM = 2;
+const MAGNIFIER_OFFSET = 80;
+
+function MagnifierOverlay({
+  imageSrc,
+  containerRef,
+  touchPos,
+  visible,
+}: {
+  imageSrc: string;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  touchPos: { x: number; y: number };
+  visible: boolean;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    if (!visible) return;
+    if (!imgRef.current) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = imageSrc;
+      imgRef.current = img;
+    }
+    const img = imgRef.current;
+    if (!img.complete) {
+      img.onload = () => drawMagnifier();
+    } else {
+      drawMagnifier();
+    }
+  }, [visible, touchPos.x, touchPos.y, imageSrc]);
+
+  function drawMagnifier() {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    const img = imgRef.current;
+    if (!canvas || !container || !img) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const rect = container.getBoundingClientRect();
+    const relX = touchPos.x - rect.left;
+    const relY = touchPos.y - rect.top;
+
+    const imgEl = container.querySelector('img') as HTMLImageElement | null;
+    if (!imgEl) return;
+    const imgRect = imgEl.getBoundingClientRect();
+    const imgRelX = touchPos.x - imgRect.left;
+    const imgRelY = touchPos.y - imgRect.top;
+
+    const normX = imgRelX / imgRect.width;
+    const normY = imgRelY / imgRect.height;
+
+    const srcX = normX * img.naturalWidth;
+    const srcY = normY * img.naturalHeight;
+    const srcSize = MAGNIFIER_SIZE / MAGNIFIER_ZOOM;
+
+    canvas.width = MAGNIFIER_SIZE;
+    canvas.height = MAGNIFIER_SIZE;
+    ctx.clearRect(0, 0, MAGNIFIER_SIZE, MAGNIFIER_SIZE);
+
+    ctx.beginPath();
+    ctx.arc(MAGNIFIER_SIZE / 2, MAGNIFIER_SIZE / 2, MAGNIFIER_SIZE / 2, 0, Math.PI * 2);
+    ctx.clip();
+
+    ctx.drawImage(
+      img,
+      srcX - srcSize / 2,
+      srcY - srcSize / 2,
+      srcSize,
+      srcSize,
+      0,
+      0,
+      MAGNIFIER_SIZE,
+      MAGNIFIER_SIZE,
+    );
+
+    ctx.beginPath();
+    ctx.arc(MAGNIFIER_SIZE / 2, MAGNIFIER_SIZE / 2, MAGNIFIER_SIZE / 2 - 1, 0, Math.PI * 2);
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(MAGNIFIER_SIZE / 2 - 6, MAGNIFIER_SIZE / 2);
+    ctx.lineTo(MAGNIFIER_SIZE / 2 + 6, MAGNIFIER_SIZE / 2);
+    ctx.moveTo(MAGNIFIER_SIZE / 2, MAGNIFIER_SIZE / 2 - 6);
+    ctx.lineTo(MAGNIFIER_SIZE / 2, MAGNIFIER_SIZE / 2 + 6);
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  if (!visible) return null;
+
+  const container = containerRef.current;
+  if (!container) return null;
+  const rect = container.getBoundingClientRect();
+  const x = touchPos.x - rect.left;
+  const y = touchPos.y - rect.top;
+
+  let magX = x - MAGNIFIER_SIZE / 2;
+  let magY = y - MAGNIFIER_SIZE - MAGNIFIER_OFFSET;
+
+  if (magY < 0) magY = y + MAGNIFIER_OFFSET;
+  if (magX < 0) magX = 0;
+  if (magX + MAGNIFIER_SIZE > rect.width) magX = rect.width - MAGNIFIER_SIZE;
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none absolute z-50 rounded-full shadow-lg"
+      style={{
+        width: MAGNIFIER_SIZE,
+        height: MAGNIFIER_SIZE,
+        left: magX,
+        top: magY,
+      }}
+    />
+  );
+}
+
 export function ImageCropper({ imageSrc, onConfirm, onCancel }: Props) {
   const imgRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [processing, setProcessing] = useState(false);
+  const [touchPos, setTouchPos] = useState({ x: 0, y: 0 });
+  const [showMagnifier, setShowMagnifier] = useState(false);
+  const isTouchDevice = typeof window !== 'undefined' && 'ontouchstart' in window;
 
   const onImageLoad = useCallback(() => {
     setCrop(fullImageCrop());
@@ -62,6 +191,23 @@ export function ImageCropper({ imageSrc, onConfirm, onCancel }: Props) {
       setProcessing(false);
     }
   }, [completedCrop, onConfirm, onCancel]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!isTouchDevice) return;
+    const touch = e.touches[0];
+    setTouchPos({ x: touch.clientX, y: touch.clientY });
+    setShowMagnifier(true);
+  }, [isTouchDevice]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isTouchDevice) return;
+    const touch = e.touches[0];
+    setTouchPos({ x: touch.clientX, y: touch.clientY });
+  }, [isTouchDevice]);
+
+  const handleTouchEnd = useCallback(() => {
+    setShowMagnifier(false);
+  }, []);
 
   return (
     <section className="rounded-3xl border border-blue-300 bg-white p-4 shadow-sm dark:border-blue-900 dark:bg-slate-900 sm:p-6">
@@ -85,7 +231,13 @@ export function ImageCropper({ imageSrc, onConfirm, onCancel }: Props) {
           </button>
         </div>
       </div>
-      <div className="relative flex justify-center overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
+      <div
+        ref={containerRef}
+        className="relative flex justify-center overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <ReactCrop
           crop={crop}
           onChange={(_, percentCrop) => setCrop(percentCrop)}
@@ -100,6 +252,12 @@ export function ImageCropper({ imageSrc, onConfirm, onCancel }: Props) {
             className="max-h-[500px] object-contain"
           />
         </ReactCrop>
+        <MagnifierOverlay
+          imageSrc={imageSrc}
+          containerRef={containerRef}
+          touchPos={touchPos}
+          visible={showMagnifier && isTouchDevice}
+        />
         <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-1.5 text-sm text-white backdrop-blur-sm">
           请框选纯公式区域
         </div>

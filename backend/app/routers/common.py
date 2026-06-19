@@ -10,8 +10,3 @@ def get_model_manager(request: Request):
     if manager is None:
         raise HTTPException(status_code=503, detail="OCR model manager is not initialized")
     return manager
-
-
-def get_ocr_engine(request: Request):
-    manager = get_model_manager(request)
-    return manager

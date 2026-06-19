@@ -15,7 +15,7 @@ TOKEN_TTL = 3600
 
 
 def _make_token(password: str, session_id: str) -> str:
-    return hmac.new(password.encode(), session_id.encode(), hashlib.sha256).hexdigest()
+    return hmac.HMAC(password.encode(), session_id.encode(), hashlib.sha256).hexdigest()
 
 
 def _purge_expired_tokens() -> None:

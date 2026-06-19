@@ -14,3 +14,6 @@ transformers>=4.45.0
 accelerate>=0.34.0
 huggingface-hub>=0.24.0
 PyMuPDF>=1.24.0
+sympy>=1.12
+munch
+requests

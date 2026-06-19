@@ -12,7 +12,6 @@ type AppState = {
   history: HistoryItem[];
   confidence: number | null;
   setLatex: (latex: string) => void;
-  insertLatex: (snippet: string) => void;
   setToast: (toast: string) => void;
   setLoading: (loading: boolean) => void;
   setPreprocess: (preprocess: boolean) => void;
@@ -36,7 +35,6 @@ export const useAppStore = create<AppState>((set) => ({
   history: [],
   confidence: null,
   setLatex: (latex) => set({ latex }),
-  insertLatex: (snippet) => set((state) => ({ latex: `${state.latex}${snippet}` })),
   setToast: (toast) => set({ toast }),
   setLoading: (loading) => set({ loading }),
   setPreprocess: (preprocess) => set({ preprocess }),

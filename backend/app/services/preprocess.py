@@ -30,19 +30,6 @@ def cv_to_pil(image: np.ndarray) -> Image.Image:
     return Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)).convert("RGB")
 
 
-def trim_whitespace(binary: np.ndarray, padding: int = 20) -> np.ndarray:
-    inv = 255 - binary
-    coords = cv2.findNonZero(inv)
-    if coords is None:
-        return binary
-    x, y, w, h = cv2.boundingRect(coords)
-    y0 = max(y - padding, 0)
-    x0 = max(x - padding, 0)
-    y1 = min(y + h + padding, binary.shape[0])
-    x1 = min(x + w + padding, binary.shape[1])
-    return binary[y0:y1, x0:x1]
-
-
 def upscale_if_small(image: np.ndarray, min_long_edge: int = 800) -> np.ndarray:
     h, w = image.shape[:2]
     long_edge = max(h, w)
@@ -50,23 +37,6 @@ def upscale_if_small(image: np.ndarray, min_long_edge: int = 800) -> np.ndarray:
         return image
     scale = min_long_edge / max(long_edge, 1)
     return cv2.resize(image, (math.ceil(w * scale), math.ceil(h * scale)), interpolation=cv2.INTER_CUBIC)
-
-
-def deskew(binary: np.ndarray) -> np.ndarray:
-    inv = 255 - binary
-    coords = np.column_stack(np.where(inv > 0))
-    if coords.size == 0:
-        return binary
-    rect = cv2.minAreaRect(coords)
-    angle = rect[-1]
-    if angle < -45:
-        angle = 90 + angle
-    if abs(angle) < 0.3 or abs(angle) > 10:
-        return binary
-    h, w = binary.shape[:2]
-    center = (w // 2, h // 2)
-    matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
-    return cv2.warpAffine(binary, matrix, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_CONSTANT, borderValue=255)
 
 
 def image_to_data_url(image: Image.Image) -> str:

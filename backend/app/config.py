@@ -28,7 +28,6 @@ class Settings(BaseSettings):
     max_loaded_models: int = Field(default=1, ge=1)
     preload_models: str = "pix2text"
     model_download_timeout_sec: int = 1800
-    pix2tex_weights_url: str = "https://github.com/lukas-blecher/LaTeX-OCR/releases/download/v0.0.1/weights.pth"
     latex_ocr_repo_id: str | None = None
     uni_equation_repo_id: str | None = None
     p2t_mfr_model: str = "mfr-1.5"

@@ -77,11 +77,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (body as ApiResponse<T>).data;
 }
 
-export async function getModelStatus(modelId?: string): Promise<ModelStatus> {
-  const query = modelId ? `?model_id=${encodeURIComponent(modelId)}` : '';
-  return request<ModelStatus>(`/model-status${query}`);
-}
-
 export async function getModels(): Promise<ModelsEventPayload> {
   return request<ModelsEventPayload>('/models');
 }
@@ -104,14 +99,6 @@ export async function recognizeFormula(file: File, preprocess = true, modelId?: 
 
 export async function getHistory(): Promise<HistoryItem[]> {
   return request<HistoryItem[]>('/history');
-}
-
-export async function createHistory(latex: string, imageBase64?: string | null): Promise<HistoryItem> {
-  return request<HistoryItem>('/history', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ latex, image_base64: imageBase64 }),
-  });
 }
 
 export async function clearHistory(): Promise<{ deleted: number }> {

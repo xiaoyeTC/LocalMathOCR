@@ -11,6 +11,10 @@ router = APIRouter(prefix="/api/pdf", tags=["pdf"])
 
 @router.post("/info")
 async def pdf_info(file: UploadFile = File(...)):
+    settings = get_settings()
+    if not settings.enable_pdf_recognition:
+        raise HTTPException(status_code=501, detail="PDF 识别未启用")
+
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="仅支持 PDF 文件")
 
@@ -37,7 +41,7 @@ async def pdf_info(file: UploadFile = File(...)):
 async def render_page(body: dict):
     pdf_base64 = body.get("pdf_base64", "")
     page = body.get("page", 1)
-    dpi = body.get("dpi", 200)
+    dpi = body.get("dpi", get_settings().pdf_dpi)
 
     if not pdf_base64:
         raise HTTPException(status_code=400, detail="pdf_base64 不能为空")

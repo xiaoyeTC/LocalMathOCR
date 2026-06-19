@@ -67,26 +67,17 @@ def _convert_with_pandoc(latex: str, target_format: str) -> tuple[bytes, str, st
 
 
 def _convert_to_mathml(latex: str) -> str:
-    try:
-        import katex
-        return katex.renderToString(latex, {"displayMode": True, "output": "mathml"})
-    except Exception:
-        pass
+    import subprocess
 
-    try:
-        import subprocess
-        result = subprocess.run(
-            ["pandoc", "-f", "latex", "-t", "mathml", "--wrap=none"],
-            input=latex.encode("utf-8"),
-            capture_output=True,
-            timeout=10,
-        )
-        if result.returncode == 0:
-            return result.stdout.decode("utf-8")
-    except Exception:
-        pass
-
-    raise RuntimeError("MathML conversion requires pandoc or pykatex")
+    result = subprocess.run(
+        ["pandoc", "-f", "latex", "-t", "mathml", "--wrap=none"],
+        input=latex.encode("utf-8"),
+        capture_output=True,
+        timeout=10,
+    )
+    if result.returncode == 0:
+        return result.stdout.decode("utf-8")
+    raise RuntimeError("MathML conversion requires pandoc")
 
 
 @router.post("/{format}")

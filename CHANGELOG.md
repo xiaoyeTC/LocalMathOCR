@@ -1,5 +1,36 @@
 # 更新日志
 
+## [2.8.1]
+
+### 修复
+
+#### Bug 修复
+- 修复 `hmac.new()` → `hmac.HMAC()` 导致管理员登录时 `AttributeError` 的问题。
+- 修复 PDF 路由未检查 `enable_pdf_recognition` 配置的问题。
+- 修复 PDF 渲染 DPI 硬编码为 200，改为使用 `pdf_dpi` 配置值（默认 300）。
+- 修复 `export.py` 中 `_convert_to_mathml` 引用不存在的 Python `katex` 包，改为纯 pandoc 转换。
+
+### 清理
+
+#### 死文件删除
+- 删除 `stores/sessionStore.ts`（从未被任何文件导入）。
+- 删除 `hooks/useModelStatusPoll.ts`（已被 SSE 替代，从未使用）。
+
+#### 死代码清理
+- 删除 `common.py:get_ocr_engine()`（`get_model_manager` 的无用包装）。
+- 删除 `preprocess.py:deskew()` 和 `trim_whitespace()`（已被 `FormulaPreprocessor` 替代）。
+- 删除 `appStore.ts:insertLatex()`（从未被调用）。
+- 删除 `api.ts:createHistory()` 和 `getModelStatus()`（从未被调用）。
+- 删除 `config.py:pix2tex_weights_url`（定义但从未读取）。
+
+#### 代码去重
+- 提取 `ModelSelector` 和 `ModelSelectorDropdown` 共享的 `fallbackCopy` + `displayModel()` 到 `modelData.ts`。
+- 移除 `ImageCropper.tsx` 中未使用的 `centerCrop`、`makeAspectCrop` 导入。
+
+#### 依赖清理
+- 移除未使用的 npm 包：`@codemirror/commands`、`@codemirror/lang-html`、`html2canvas`。
+- 补充缺失的 Python 依赖：`sympy>=1.12`、`munch`、`requests`。
+
 ## [2.8.0]
 
 ### 新增
