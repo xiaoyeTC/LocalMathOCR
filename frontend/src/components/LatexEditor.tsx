@@ -4,6 +4,7 @@ import { StreamLanguage } from '@codemirror/language';
 import { stex } from '@codemirror/legacy-modes/mode/stex';
 import { EditorView } from '@codemirror/view';
 import 'mathlive';
+import 'mathlive/fonts.css';
 
 type Props = {
   value: string;
@@ -15,25 +16,37 @@ type EditorMode = 'visual' | 'source';
 
 export function LatexEditor({ value, onChange, onCopy }: Props) {
   const [mode, setMode] = useState<EditorMode>('visual');
-  const mfRef = useRef<HTMLElement & { setValue?: (v: string) => void; value?: string }>(null);
+  const mfRef = useRef<HTMLElement | null>(null);
   const lastPushedRef = useRef<string>('');
+
+  const handleChange = useCallback(
+    (latex: string) => {
+      lastPushedRef.current = latex;
+      onChange(latex);
+    },
+    [onChange],
+  );
 
   useEffect(() => {
     if (mode !== 'visual') return;
-    const mf = mfRef.current;
+    const mf = mfRef.current as (HTMLElement & { setValue?: (v: string) => void; value?: string }) | null;
+    if (!mf || typeof mf.setValue !== 'function') return;
+    const onInput = () => {
+      const latex = mf.value ?? '';
+      handleChange(latex);
+    };
+    mf.addEventListener('input', onInput);
+    return () => mf.removeEventListener('input', onInput);
+  }, [mode, handleChange]);
+
+  useEffect(() => {
+    if (mode !== 'visual') return;
+    const mf = mfRef.current as (HTMLElement & { setValue?: (v: string) => void; value?: string }) | null;
     if (!mf || typeof mf.setValue !== 'function') return;
     if (mf.value !== value && lastPushedRef.current !== value) {
       mf.setValue(value);
     }
   }, [value, mode]);
-
-  const handleMathFieldInput = useCallback(() => {
-    const mf = mfRef.current;
-    if (!mf) return;
-    const latex = mf.value ?? '';
-    lastPushedRef.current = latex;
-    onChange(latex);
-  }, [onChange]);
 
   return (
     <section id="editor" className="flex min-h-[280px] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:min-h-[420px]">
@@ -60,14 +73,16 @@ export function LatexEditor({ value, onChange, onCopy }: Props) {
       <div className="flex-1">
         {mode === 'visual' ? (
           <div className="h-full p-3 sm:p-4">
+            {/* @ts-expect-error math-field is a MathLive custom element */}
             <math-field
-              ref={mfRef as React.Ref<HTMLElement>}
-              onInput={handleMathFieldInput}
+              ref={mfRef}
               style={{
                 width: '100%',
                 minHeight: '200px',
                 fontSize: '1.25em',
                 padding: '8px',
+                backgroundColor: 'inherit',
+                color: 'inherit',
               }}
             />
           </div>

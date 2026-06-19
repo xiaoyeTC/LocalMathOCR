@@ -48,7 +48,7 @@ const EXPORT_FORMATS: ExportFormatGroup[] = [
   {
     group: '文档',
     items: [
-      { label: 'MathML', value: 'mathml', needsBackend: true },
+      { label: 'MathML', value: 'mathml', needsBackend: false },
       { label: 'HTML', value: 'html', needsBackend: true },
       { label: 'Word (.docx)', value: 'docx', needsBackend: true },
       { label: 'PDF', value: 'pdf', needsBackend: true },
@@ -281,7 +281,11 @@ export function PreviewPane({ latex, onToast }: Props) {
     }
     setExporting(true);
     try {
-      if (!needsBackend) {
+      if (format === 'mathml') {
+        const mathml = katex.renderToString(latex, { throwOnError: true, displayMode: true, strict: 'ignore', output: 'mathml' });
+        await navigator.clipboard.writeText(mathml);
+        onToast('MathML 已复制到剪贴板');
+      } else if (!needsBackend) {
         const result = await exportFormulaText(format, latex);
         await navigator.clipboard.writeText(result.content);
         onToast('已复制到剪贴板');

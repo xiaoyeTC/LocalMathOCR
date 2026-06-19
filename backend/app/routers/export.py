@@ -16,7 +16,7 @@ def _convert_text_format(format: str, latex: str) -> str:
     if format == "latex-equation":
         return f"\\begin{{equation}}\n{text}\n\\end{{equation}}"
     if format == "markdown-inline":
-        return f"$${text}$"
+        return f"${text}$"
     if format == "markdown-block":
         return f"$$\n{text}\n$$"
     if format == "text":
@@ -67,7 +67,6 @@ def _convert_with_pandoc(latex: str, target_format: str) -> tuple[bytes, str, st
 
 
 def _convert_to_mathml(latex: str) -> str:
-    from app.routers.common import success as _success
     try:
         import katex
         return katex.renderToString(latex, {"displayMode": True, "output": "mathml"})
