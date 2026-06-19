@@ -1,8 +1,9 @@
-import { useRef, useEffect, useState, useCallback, type CSSProperties } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo, type CSSProperties } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { StreamLanguage } from '@codemirror/language';
 import { stex } from '@codemirror/legacy-modes/mode/stex';
 import { EditorView } from '@codemirror/view';
+import { linter, type Diagnostic } from '@codemirror/lint';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import 'mathlive';
@@ -94,18 +95,20 @@ const TEMPLATES: TemplateItem[] = [
 type PreviewState = {
   html: string;
   error: string;
+  parsedError: ParsedError | null;
 };
 
 function renderLatex(latex: string): PreviewState {
   const v = latex.trim();
-  if (!v) return { html: '', error: '' };
+  if (!v) return { html: '', error: '', parsedError: null };
   try {
     return {
       html: katex.renderToString(v, { throwOnError: true, displayMode: true, strict: 'ignore', output: 'htmlAndMathml' }),
       error: '',
+      parsedError: null,
     };
   } catch (err) {
-    return { html: '', error: err instanceof Error ? err.message : 'LaTeX syntax error' };
+    return { html: '', error: err instanceof Error ? err.message : 'LaTeX syntax error', parsedError: parseKatexError(err, v) };
   }
 }
 
@@ -210,7 +213,77 @@ function normalizeMathliveLatex(latex: string): string {
   out = out.replace(/\b\\capitalDifferentialD\b/g, '\\mathrm{D}');
   out = out.replace(/\\operatorname\*?\{([^}]*)\}/g, '\\mathrm{$1}');
   out = out.replace(/\\char"([0-9A-Fa-f]+)\b/g, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)));
+  out = out.replace(/\\varepsilon\b/g, '\\epsilon');
+  out = out.replace(/\\varphi\b/g, '\\phi');
+  out = out.replace(/\\vartheta\b/g, '\\theta');
+  out = out.replace(/\\varsigma\b/g, '\\sigma');
+  out = out.replace(/\\varrho\b/g, '\\rho');
+  out = out.replace(/(?<![a-zA-Z])\\i\b(?![a-zA-Z])/g, 'i');
+  out = out.replace(/(?<![a-zA-Z])\\j\b(?![a-zA-Z])/g, 'j');
   return out;
+}
+
+type ParsedError = {
+  message: string;
+  line: number;
+  column: number;
+  position: number;
+};
+
+function parseKatexError(err: unknown, latex: string): ParsedError | null {
+  if (!(err instanceof Error)) return null;
+  const msg = err.message;
+  const posMatch = msg.match(/position\s+(\d+)/i);
+  const pos = posMatch ? parseInt(posMatch[1], 10) : 0;
+  const lines = latex.slice(0, pos).split('\n');
+  const line = lines.length;
+  const column = (lines[lines.length - 1] ?? '').length + 1;
+  const cleanMsg = msg.replace(/\s*\(.*?\)\s*$/, '').replace(/&nbsp;/g, ' ').trim();
+  return { message: cleanMsg, line, column, position: pos };
+}
+
+const TYPO_FIXES: [RegExp, string][] = [
+  [/\\pii\b/g, '\\pi'],
+  [/\\sqr\b/g, '\\sqrt'],
+  [/\\bet\b/g, '\\beta'],
+  [/\\gama\b/g, '\\gamma'],
+  [/\\lamba\b/g, '\\lambda'],
+  [/\\inf\b(?!ty)/g, '\\infty'],
+  [/\\sum\b_\{([^}]*)\}\^\{([^}]*)\}([^_^\s])/g, '\\sum_{$1}^{$2} $3'],
+];
+
+function autoFixLatex(latex: string): string {
+  let out = latex;
+  for (const [pattern, replacement] of TYPO_FIXES) {
+    out = out.replace(pattern, replacement);
+  }
+  const openBraces = (out.match(/\{/g) || []).length;
+  const closeBraces = (out.match(/\}/g) || []).length;
+  if (openBraces > closeBraces) {
+    out += '}'.repeat(openBraces - closeBraces);
+  }
+  return out;
+}
+
+function createKatexLinter(latex: string) {
+  return linter(() => {
+    const v = latex.trim();
+    if (!v) return [];
+    try {
+      katex.renderToString(v, { throwOnError: true, displayMode: true, strict: 'ignore' });
+      return [];
+    } catch (err) {
+      const parsed = parseKatexError(err, v);
+      if (!parsed) return [];
+      const diag: Diagnostic = {
+        from: Math.min(parsed.position, v.length),
+        to: Math.min(parsed.position + 1, v.length),
+        severity: 'error',
+        message: parsed.message,
+      };
+      return [diag];
+    }
+  }, { delay: 500 });
 }
 
 export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
@@ -219,7 +292,7 @@ export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
   const [exportFont, setExportFont] = useState(EXPORT_FONTS[0].value);
   const [exportOpen, setExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [preview, setPreview] = useState<PreviewState>({ html: '', error: '' });
+  const [preview, setPreview] = useState<PreviewState>({ html: '', error: '', parsedError: null });
 
   const mfRef = useRef<HTMLElement | null>(null);
   const lastPushedRef = useRef<string>('');
@@ -239,6 +312,18 @@ export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
     },
     [onChange],
   );
+
+  const katexLinter = useMemo(() => createKatexLinter(value), [value]);
+
+  const handleAutoFix = useCallback(() => {
+    const fixed = autoFixLatex(value);
+    if (fixed !== value) {
+      onChange(fixed);
+      onToast('已自动修复常见错误');
+    } else {
+      onToast('未发现可自动修复的错误');
+    }
+  }, [value, onChange, onToast]);
 
   useEffect(() => {
     if (mode !== 'visual') return;
@@ -455,7 +540,7 @@ export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
         <div className="grid min-h-[320px] lg:grid-cols-2">
           <div className="flex flex-col border-b border-slate-200 dark:border-slate-800 lg:border-b-0 lg:border-r">
             <div className="flex-1">
-              <CodeMirror value={value} height="280px" extensions={[StreamLanguage.define(stex), EditorView.lineWrapping]} basicSetup={{ lineNumbers: true, foldGutter: true }} onChange={onChange} theme="light" />
+              <CodeMirror value={value} height="280px" extensions={[StreamLanguage.define(stex), EditorView.lineWrapping, katexLinter]} basicSetup={{ lineNumbers: true, foldGutter: true }} onChange={onChange} theme="light" />
             </div>
           </div>
           <div className="flex flex-col">
@@ -463,7 +548,14 @@ export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
               {preview.error ? (
                 <div className="max-w-full rounded-xl border border-amber-200 bg-amber-50 p-4 text-left text-sm text-amber-800">
                   <p className="font-semibold">LaTeX 语法需要修正</p>
+                  {preview.parsedError && (
+                    <p className="mt-1 text-xs text-amber-700">
+                      位置：第 {preview.parsedError.line} 行，第 {preview.parsedError.column} 列
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-amber-600">{preview.parsedError?.message ?? preview.error}</p>
                   <p className="mt-2 break-all font-mono text-xs text-slate-700">{value}</p>
+                  <button onClick={handleAutoFix} className="mt-2 rounded-lg bg-amber-200 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-300">一键修复</button>
                 </div>
               ) : preview.html ? (
                 <div ref={previewRef} className="formula-preview-font inline-block text-2xl" style={previewFontStyle} dangerouslySetInnerHTML={{ __html: preview.html }} />

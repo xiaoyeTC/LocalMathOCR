@@ -42,13 +42,13 @@ def _verify_admin(request: Request) -> bool:
     return True
 
 
-USER_SETTINGS = {"preprocess", "enable_formula_preprocessing", "default_model_id"}
+USER_SETTINGS = {"preprocess", "enable_formula_preprocessing", "default_model_id", "history_limit"}
 
 ADMIN_SETTINGS = {
     "app_device", "enable_pix2text", "enable_latex_ocr", "enable_uni_equation",
     "preload_models", "max_loaded_models", "model_download_timeout_sec",
     "p2t_mfr_model", "hf_endpoint", "cors_origins", "database_url", "model_dir",
-    "enable_pandoc", "pandoc_path", "xelatex_path",
+    "enable_pandoc", "pandoc_path", "xelatex_path", "enable_computation",
 }
 
 
@@ -79,6 +79,7 @@ async def get_all_settings(request: Request):
         "preprocess": settings.return_preprocessed_image,
         "enable_formula_preprocessing": settings.enable_formula_preprocessing,
         "default_model_id": settings.default_model_id,
+        "history_limit": settings.history_limit,
     }
 
     if is_admin:
@@ -95,6 +96,7 @@ async def get_all_settings(request: Request):
             "enable_pandoc": settings.enable_pandoc,
             "pandoc_path": settings.pandoc_path,
             "xelatex_path": settings.xelatex_path,
+            "enable_computation": settings.enable_computation,
         })
 
     return success({"settings": data, "is_admin": is_admin, "has_admin_password": bool(settings.admin_password)})

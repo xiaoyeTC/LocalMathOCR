@@ -151,6 +151,9 @@ export function SettingsPanel({ onClose }: Props) {
                   <SettingRow label="高级预处理" desc="深色反转、自适应二值化、去噪、倾斜校正" icon="⚙️">
                     <Toggle value={!!settings.enable_formula_preprocessing} onChange={(v) => setSettings((s) => s ? { ...s, enable_formula_preprocessing: v } : s)} />
                   </SettingRow>
+                  <SettingRow label="历史记录条数" desc="每页最多保存的历史记录数量" icon="📋">
+                    <input type="number" value={Number(settings.history_limit ?? 50)} onChange={(e) => setSettings((s) => s ? { ...s, history_limit: Number(e.target.value) } : s)} className="w-20 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-right text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100" />
+                  </SettingRow>
                   <SettingRow label="运行模式" desc="当前计算运行模式" icon="💻">
                     <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-sm font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300">{String(settings.app_device ?? 'auto')}</span>
                   </SettingRow>
@@ -158,19 +161,28 @@ export function SettingsPanel({ onClose }: Props) {
               </section>
 
               {/* Admin Login */}
-              {hasAdminPassword && !isAdmin && (
-                <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 dark:border-slate-600 dark:bg-slate-800 sm:p-5">
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="text-lg">🔒</span>
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">管理员登录</span>
+              <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 dark:border-slate-600 dark:bg-slate-800 sm:p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="text-lg">🔒</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">管理员</span>
+                </div>
+                {isAdmin ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-green-600 dark:text-green-400">已登录管理员模式</span>
+                    <button onClick={handleAdminLogout} className="rounded-lg px-3 py-1.5 text-xs text-slate-400 hover:bg-red-50 hover:text-red-500">退出</button>
                   </div>
-                  <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">输入密码解锁高级设置</p>
-                  <div className="flex gap-2">
-                    <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="密码" className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100" onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()} />
-                    <button onClick={handleAdminLogin} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700">登录</button>
-                  </div>
-                </section>
-              )}
+                ) : hasAdminPassword ? (
+                  <>
+                    <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">输入密码解锁高级设置</p>
+                    <div className="flex gap-2">
+                      <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="密码" className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100" onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()} />
+                      <button onClick={handleAdminLogin} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700">登录</button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-400 dark:text-slate-500">未设置管理员密码，在 `.env` 中配置 `ADMIN_PASSWORD` 后可登录</p>
+                )}
+              </section>
 
               {/* Admin Settings */}
               {isAdmin && (

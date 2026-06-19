@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ConfidenceBanner } from './components/ConfidenceBanner';
+import { ComputePanel } from './components/ComputePanel';
 import { FormulaWorkspace } from './components/FormulaWorkspace';
 import { Header } from './components/Header';
 import { HistorySidebar } from './components/HistorySidebar';
@@ -228,10 +229,11 @@ export default function App() {
             {cropImageSrc ? (
               <ImageCropper imageSrc={cropImageSrc} onConfirm={handleCroppedFile} onCancel={handleCancelCrop} />
             ) : (
-              <UploadZone modelStatus={modelStatus} loading={loading} onFile={handleFile} />
+              <UploadZone modelStatus={modelStatus} loading={loading} onFile={handleFile} onInsertLatex={setLatex} onToast={showToast} onRecognized={refreshHistory} />
             )}
             <ConfidenceBanner confidence={confidence} />
             <FormulaWorkspace value={latex} onChange={setLatex} onCopy={copyLatex} onToast={showToast} />
+            <ComputePanel latex={latex} onInsert={setLatex} onToast={showToast} />
           </div>
           <HistorySidebar history={history} onSelect={setLatex} onDelete={removeHistory} onClear={removeAllHistory} />
         </div>

@@ -27,10 +27,6 @@
 
 ![移动端](docs/preview-mobile.png)
 
-### 导出与字体选择
-
-![导出](docs/preview-export.png)
-
 ### 设置面板
 
 ![设置](docs/preview-settings.png)
@@ -53,9 +49,12 @@
 - **主题定制** — 8 种预设配色方案，卡片式 / 下拉菜单式两种模型选择器风格
 - **设置面板** — 可视化配置默认模型、预处理、模型开关等参数，保存后即时生效无需重启
 - **高级图片预处理** — 深色背景反转、自适应二值化、去噪、倾斜校正、自动裁剪，可通过设置面板开关
-- **MathLive 可视化编辑器** — 虚拟数学键盘输入，支持与源码编辑模式切换，公式模板快捷插入
+- **公式工作区** — MathLive 可视化编辑 + CodeMirror 源码编辑，公式模板快捷栏，13 种格式统一导出
+- **LaTeX 语法验证** — 源码模式错误位置红色波浪线高亮，显示行号列号和具体原因，一键修复常见错误
+- **数学计算工作台** — SymPy 符号计算，支持展开、因式分解、化简、求解、求导、积分、极限、级数
+- **PDF 公式提取** — 上传 PDF，按页查看，在页面上框选公式区域识别，支持缩放和翻页
 - **多格式导出** — PNG/SVG/LaTeX/Markdown/MathML/HTML/Word/PDF 等 13 种格式，统一导出菜单
-- **历史记录隔离** — 按浏览器 Session 隔离，不同标签页互不影响
+- **历史记录隔离** — 按浏览器 Session 隔离，不同标签页互不影响，可配置最大条数
 - **移动端适配** — 响应式布局，手机端可正常使用全部核心功能
 
 ---
@@ -65,13 +64,16 @@
 | 模块 | 说明 |
 | --- | --- |
 | 上传识别 | 拖拽、上传、粘贴图片，一键识别公式 |
+| PDF 公式提取 | 上传 PDF，按页查看，框选公式区域识别，支持缩放翻页 |
 | 手动框选 | 上传后进入裁剪模式，可拖拽选区框选纯公式区域 |
 | 置信度提示 | 识别置信度低于 80% 时显示警告条 |
 | 公式工作区 | MathLive 可视化 + CodeMirror 源码编辑，公式模板快捷栏，统一导出菜单（13 种格式） |
-| 历史记录 | 按浏览器隔离，支持删除与清空 |
+| 语法验证 | 源码模式错误位置高亮，显示行号列号，一键修复常见错误 |
+| 数学计算 | SymPy 符号计算：展开、因式分解、化简、求解、求导、积分、极限、级数 |
+| 历史记录 | 按浏览器隔离，支持删除与清空，可配置最大条数 |
 | 模型选择 | 卡片式或下拉菜单式，展示状态、显存需求与切换按钮 |
 | 模型状态 | Header 实时显示当前模型名称、就绪状态和设备信息 |
-| 设置面板 | 通用设置（轻度/高级预处理）+ 管理员设置，支持保存到 `.env` 并即时生效 |
+| 设置面板 | 通用设置 + 管理员登录 + 管理员设置，保存到 `.env` 并即时生效 |
 | 主题设置 | 8 种配色 + 两种选择器风格 |
 
 ---
@@ -91,6 +93,7 @@
 | [KaTeX](https://github.com/KaTeX/KaTeX) | LaTeX 数学公式渲染 |
 | [react-image-crop](https://github.com/DominicTobias/react-image-crop) | 图片裁剪 |
 | [MathLive](https://github.com/nicolewhite/mathlive) | 可视化数学公式编辑 |
+| [react-dropzone](https://github.com/react-dropzone/react-dropzone) | 文件拖拽上传 |
 
 ### 后端
 
@@ -105,6 +108,8 @@
 | [OpenCV](https://github.com/opencv/opencv) | 图像预处理 |
 | [Pillow](https://github.com/python-pillow/Pillow) | 图像读写 |
 | [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy) | 数据库 ORM |
+| [SymPy](https://github.com/sympy/sympy) | 符号计算引擎 |
+| [PyMuPDF](https://github.com/pymupdf/PyMuPDF) | PDF 页面渲染 |
 
 ---
 
@@ -182,6 +187,7 @@ cd frontend && npm install && npm run dev
 | `ENABLE_PANDOC` | `false` | 启用 Pandoc 导出（Word/PDF/HTML） |
 | `PANDOC_PATH` | `pandoc` | Pandoc 可执行文件路径 |
 | `XELATEX_PATH` | `xelatex` | XeLaTeX 可执行文件路径（PDF 导出需要） |
+| `HISTORY_LIMIT` | `50` | 历史记录最大保存条数 |
 | `DATABASE_URL` | `sqlite+aiosqlite:///./data/history.db` | 数据库地址 |
 | `MODEL_DIR` | `./models` | 模型缓存目录 |
 | `CORS_ORIGINS` | `localhost:5173,...` | 允许跨域来源 |
@@ -204,7 +210,10 @@ cd frontend && npm install && npm run dev
 | GET | `/api/models/events` | SSE 模型状态流 |
 | POST | `/api/models/{id}/activate` | 切换模型 |
 | POST | `/api/ocr` | 识别公式（file, preprocess, model_id） |
-| POST | `/api/export/{format}` | 导出公式（latex, 支持 12 种格式） |
+| POST | `/api/export/{format}` | 导出公式（13 种格式） |
+| POST | `/api/compute/` | 数学计算（latex, operation） |
+| POST | `/api/pdf/info` | 上传 PDF 获取页数 |
+| POST | `/api/pdf/render` | 渲染 PDF 指定页面 |
 | GET | `/api/history` | 获取历史记录 |
 | DELETE | `/api/history` | 清空历史 |
 | GET | `/api/settings` | 获取设置 |

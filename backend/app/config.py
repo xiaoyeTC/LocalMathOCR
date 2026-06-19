@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     hf_endpoint: str = ""
     enable_formula_preprocessing: bool = False
     enable_pandoc: bool = False
+    enable_computation: bool = True
+    enable_pdf_recognition: bool = True
+    pdf_dpi: int = 300
+    history_limit: int = 50
     pandoc_path: str = "pandoc"
     xelatex_path: str = "xelatex"
     admin_password: str = ""

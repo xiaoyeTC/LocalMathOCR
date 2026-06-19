@@ -147,3 +147,13 @@ export async function exportFormulaFile(format: string, latex: string): Promise<
   }
   return res.blob();
 }
+
+export type ComputeResult = { result_latex: string; result_text: string; operation: string };
+
+export async function computeFormula(latex: string, operation: string): Promise<ComputeResult> {
+  return request<ComputeResult>('/compute/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ latex, operation }),
+  });
+}
