@@ -1,0 +1,21 @@
+appId: com.simpletex.localmathocr
+productName: SimpleTex
+directories:
+  output: dist-desktop
+files:
+  - electron/**/*
+  - frontend/dist/**/*
+  - "!backend/**/*"
+extraResources:
+  - from: backend/dist/main.exe
+    to: backend/main.exe
+  - from: backend/.env
+    to: backend/.env
+win:
+  target: nsis
+  icon: assets/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: assets/icon.ico
+  uninstallerIcon: assets/icon.ico

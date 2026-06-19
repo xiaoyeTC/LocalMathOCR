@@ -1,0 +1,21 @@
+{
+  "name": "simpletex",
+  "version": "2.9.0",
+  "private": true,
+  "main": "electron/main.ts",
+  "scripts": {
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "dev:electron": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"wait-on http://localhost:5173 && electron electron/main.ts\"",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && pyinstaller build.spec --distpath dist --noconfirm",
+    "build:electron": "npm run build:frontend && npm run build:backend && electron-builder --config electron/electron-builder.yml",
+    "postinstall": "cd frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
+    "wait-on": "^7.2.0"
+  }
+}

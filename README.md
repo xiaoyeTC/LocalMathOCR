@@ -116,6 +116,7 @@
 | [react-image-crop](https://github.com/DominicTobias/react-image-crop) | 图片裁剪 |
 | [MathLive](https://github.com/nicolewhite/mathlive) | 可视化数学公式编辑 |
 | [react-dropzone](https://github.com/react-dropzone/react-dropzone) | 文件拖拽上传 |
+| [Electron](https://github.com/electron/electron) | 桌面应用打包 |
 
 ### 后端
 
@@ -171,6 +172,23 @@ docker compose --profile gpu up --build
 ```
 
 访问：`http://localhost:8080`（前端）| `http://localhost:8000/health`（后端）
+
+---
+
+## Electron 桌面应用
+
+```bash
+# 安装依赖
+npm install
+
+# 开发模式（前端 + 后端 + Electron 窗口）
+npm run dev:electron
+
+# 打包为 Windows 安装包
+npm run build:electron
+```
+
+> 打包前需安装 PyInstaller（`pip install pyinstaller`）并将 `assets/icon.ico` 替换为 256×256 应用图标。
 
 ---
 

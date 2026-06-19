@@ -48,7 +48,10 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const isElectron = typeof window !== 'undefined' && 'electron' in window;
+const API_BASE_URL = isElectron
+  ? 'http://127.0.0.1:8000/api'
+  : (import.meta.env.VITE_API_BASE_URL || '/api');
 
 function getSessionId(): string {
   try {

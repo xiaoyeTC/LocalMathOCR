@@ -1,5 +1,24 @@
 # 更新日志
 
+## [2.9.1]
+
+### 新增
+
+#### Electron 桌面应用打包
+- 新增 `electron/main.ts`：Electron 主进程，启动 FastAPI 后端并等待端口就绪后创建窗口。
+- 新增 `electron/preload.ts`：预加载脚本，暴露 `window.electron` 对象。
+- 新增 `electron/electron-builder.yml`：NSIS 安装包配置。
+- 新增 `backend/build.spec`：PyInstaller 将 FastAPI 后端打包为单文件 `.exe`。
+- 新增根目录 `package.json`：Electron 脚本（`dev:electron`、`build:electron`）和依赖。
+- 前端 API 层自动检测 Electron 模式，直接连接 `127.0.0.1:8000`。
+- Vite 配置添加 `base: './'` 支持 `file://` 协议。
+
+### 优化
+
+#### 开发与构建流程
+- `npm run dev:electron`：同时启动前端、后端、Electron 窗口（开发模式）。
+- `npm run build:electron`：构建前端 + PyInstaller 打包后端 + electron-builder 生成安装包。
+
 ## [2.9.0]
 
 ### 新增
