@@ -1,5 +1,31 @@
 # 更新日志
 
+## [2.7.0]
+
+### 优化
+
+#### 公式工作区重构
+- 将 `LatexEditor`、`PreviewPane`、`SymbolPanel` 三个独立组件合并为统一的 `FormulaWorkspace` 组件。
+- **可视化模式**：MathLive 编辑器全宽显示，所见即所得，无需额外预览面板。
+- **源码模式**：CodeMirror 左侧编辑 + KaTeX 右侧预览，保留语法错误检查。
+- 新增「公式模板快捷栏」：7 个常用结构化模板（分数、根号、上标、下标、求和、积分、矩阵），点击一键插入。
+- 导出功能整合到统一工具栏：下拉菜单包含 4 组 13 种格式（PNG/SVG、LaTeX、Markdown、文档）。
+- 工具栏单行布局，不再换行挤压。
+- 删除 `LatexEditor.tsx`、`PreviewPane.tsx`、`SymbolPanel.tsx` 三个冗余组件。
+
+#### MathLive 兼容性修复
+- 修复 MathLive 特有命令（`\exponentialE`、`\imaginaryI`、`\differentialD` 等）导致 KaTeX 预览报语法错误的问题。
+- 新增 `normalizeMathliveLatex()` 标准化函数，MathLive 输出自动转换为标准 LaTeX。
+- 修复切换到源码模式再切回可视化模式时编辑器内容被清空的问题，改用 `requestAnimationFrame` 等待元素就绪后同步值。
+
+#### 导出功能优化
+- PNG/SVG 导出合并到导出下拉菜单，工具栏更简洁。
+- Pandoc 相关格式导出失败时显示友好提示，不再暴露后端技术信息。
+- 管理员设置面板新增「启用 Pandoc」开关。
+
+### 更新
+- 项目预览截图更新为公式工作区统一布局。
+
 ## [2.6.0]
 
 ### 新增

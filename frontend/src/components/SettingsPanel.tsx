@@ -212,6 +212,9 @@ export function SettingsPanel({ onClose }: Props) {
                     <SettingRow label="HF 镜像" desc="HuggingFace 镜像地址" icon="🌐">
                       <input type="text" value={String(settings.hf_endpoint ?? '')} onChange={(e) => setSettings((s) => s ? { ...s, hf_endpoint: e.target.value } : s)} className="w-48 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-right text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100" />
                     </SettingRow>
+                    <SettingRow label="启用 Pandoc" desc="支持 Word/PDF/HTML 格式导出" icon="📄">
+                      <Toggle value={!!settings.enable_pandoc} onChange={(v) => setSettings((s) => s ? { ...s, enable_pandoc: v } : s)} />
+                    </SettingRow>
                   </div>
                 </section>
               )}

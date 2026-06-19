@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ConfidenceBanner } from './components/ConfidenceBanner';
+import { FormulaWorkspace } from './components/FormulaWorkspace';
 import { Header } from './components/Header';
 import { HistorySidebar } from './components/HistorySidebar';
 import { ImageCropper } from './components/ImageCropper';
-import { LatexEditor } from './components/LatexEditor';
 import { ModelSelector } from './components/ModelSelector';
 import { ModelSelectorDropdown } from './components/ModelSelectorDropdown';
-import { PreviewPane } from './components/PreviewPane';
 import { SettingsPanel } from './components/SettingsPanel';
-import { SymbolPanel } from './components/SymbolPanel';
 import { Toast } from './components/Toast';
 import { UploadZone } from './components/UploadZone';
 import { usePasteImage } from './hooks/usePasteImage';
@@ -34,7 +32,6 @@ export default function App() {
     history,
     confidence,
     setLatex,
-    insertLatex,
     setToast,
     setLoading,
     setPreprocess,
@@ -234,11 +231,7 @@ export default function App() {
               <UploadZone modelStatus={modelStatus} loading={loading} onFile={handleFile} />
             )}
             <ConfidenceBanner confidence={confidence} />
-            <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-              <LatexEditor value={latex} onChange={setLatex} onCopy={copyLatex} />
-              <PreviewPane latex={latex} onToast={showToast} />
-            </div>
-            <SymbolPanel onInsert={insertLatex} />
+            <FormulaWorkspace value={latex} onChange={setLatex} onCopy={copyLatex} onToast={showToast} />
           </div>
           <HistorySidebar history={history} onSelect={setLatex} onDelete={removeHistory} onClear={removeAllHistory} />
         </div>
