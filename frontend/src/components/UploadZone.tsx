@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import type { ModelStatus } from '../services/api';
 import { recognizeFormula } from '../services/api';
+import { HandwritingPad } from './HandwritingPad';
 
 type Props = {
   modelStatus: ModelStatus;
@@ -12,7 +13,7 @@ type Props = {
   onRecognized?: () => void;
 };
 
-type UploadMode = 'image' | 'pdf';
+type UploadMode = 'image' | 'pdf' | 'handwrite';
 
 type Rect = { x: number; y: number; w: number; h: number };
 type RecognitionResult = { latex: string; page: number; rect: Rect };
@@ -42,10 +43,11 @@ export function UploadZone({ modelStatus, loading, onFile, onInsertLatex, onToas
     <section id="recognize" className="rounded-3xl border border-dashed border-blue-300 bg-white shadow-sm dark:border-blue-900 dark:bg-slate-900">
       <div className="flex border-b border-slate-200 dark:border-slate-800">
         <button onClick={() => setMode('image')} className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${mode === 'image' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}>图片识别</button>
-        <button onClick={() => setMode('pdf')} className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${mode === 'pdf' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}>PDF 公式提取</button>
+        <button onClick={() => setMode('pdf')} className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${mode === 'pdf' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}>PDF 提取</button>
+        <button onClick={() => setMode('handwrite')} className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${mode === 'handwrite' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}>手写输入</button>
       </div>
 
-      {mode === 'image' && (
+      <div className={mode === 'image' ? '' : 'hidden'}>
         <div className="p-4 sm:p-8">
           <div {...imageDropzone.getRootProps()} className={`flex flex-col items-center justify-center rounded-2xl px-3 py-6 text-center transition sm:px-4 sm:py-10 ${imageDropzone.isDragActive ? 'bg-blue-50 dark:bg-blue-950/40' : 'bg-slate-50 dark:bg-slate-950'}`}>
             <input {...imageDropzone.getInputProps()} />
@@ -60,11 +62,17 @@ export function UploadZone({ modelStatus, loading, onFile, onInsertLatex, onToas
             {modelStatus.status === 'unavailable' && <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">{modelStatus.message}</p>}
           </div>
         </div>
-      )}
+      </div>
 
-      {mode === 'pdf' && (
+      <div className={mode === 'pdf' ? '' : 'hidden'}>
         <PdfExtractor onInsert={onInsertLatex} onToast={onToast} onRecognized={onRecognized} />
-      )}
+      </div>
+
+      <div className={mode === 'handwrite' ? '' : 'hidden'}>
+        <div className="p-4 sm:p-5">
+          <HandwritingPad onResult={onInsertLatex} onToast={onToast} onRecognized={onRecognized} />
+        </div>
+      </div>
     </section>
   );
 }
