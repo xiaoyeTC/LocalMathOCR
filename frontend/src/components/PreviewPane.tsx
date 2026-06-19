@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import { exportFormulaText, exportFormulaFile } from '../services/api';
 
 type Props = {
   latex: string;
@@ -23,6 +24,39 @@ const EXPORT_FONTS: ExportFont[] = [
   { label: 'Arial', value: 'arial', stack: 'Arial, Helvetica, sans-serif' },
 ];
 
+type ExportFormatGroup = {
+  group: string;
+  items: { label: string; value: string; needsBackend: boolean }[];
+};
+
+const EXPORT_FORMATS: ExportFormatGroup[] = [
+  {
+    group: 'LaTeX',
+    items: [
+      { label: 'LaTeX (inline)', value: 'latex-inline', needsBackend: false },
+      { label: 'LaTeX (display)', value: 'latex-display', needsBackend: false },
+      { label: 'LaTeX (equation)', value: 'latex-equation', needsBackend: false },
+    ],
+  },
+  {
+    group: 'Markdown',
+    items: [
+      { label: 'Markdown (inline)', value: 'markdown-inline', needsBackend: false },
+      { label: 'Markdown (block)', value: 'markdown-block', needsBackend: false },
+    ],
+  },
+  {
+    group: '文档',
+    items: [
+      { label: 'MathML', value: 'mathml', needsBackend: true },
+      { label: 'HTML', value: 'html', needsBackend: true },
+      { label: 'Word (.docx)', value: 'docx', needsBackend: true },
+      { label: 'PDF', value: 'pdf', needsBackend: true },
+      { label: 'Plain Text', value: 'text', needsBackend: false },
+    ],
+  },
+];
+
 type PreviewState = {
   html: string;
   error: string;
@@ -41,7 +75,6 @@ function renderLatex(latex: string): PreviewState {
   }
 }
 
-/** Build an off-screen container with KaTeX HTML that matches the on-page preview. */
 function buildExportContainer(html: string, fontStack: string): HTMLDivElement {
   const container = document.createElement('div');
   container.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
@@ -65,12 +98,10 @@ function buildExportContainer(html: string, fontStack: string): HTMLDivElement {
   return container;
 }
 
-/** Convert an SVG string to a data URL using encodeURIComponent (avoids btoa unicode issues). */
 function svgToDataUrl(svg: string): string {
   return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
 }
 
-/** Render an SVG foreignObject image to canvas, then return the canvas. */
 function svgToCanvas(svgString: string, width: number, height: number, scale: number): Promise<HTMLCanvasElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -88,7 +119,6 @@ function svgToCanvas(svgString: string, width: number, height: number, scale: nu
   });
 }
 
-/** Collect KaTeX CSS rules only and strip external font urls to keep canvas export untainted. */
 function collectExportCss(fontStack: string): string {
   const rules: string[] = [
     '.katex { font-size: 1.5rem; line-height: 1.2; color: #0f172a; }',
@@ -114,7 +144,6 @@ function collectExportCss(fontStack: string): string {
   return rules.join('\n');
 }
 
-/** Serialize KaTeX HTML through the DOM so attributes are XML-safe in SVG. */
 function buildSvgDocument(html: string, width: number, height: number, css: string, fontStack: string): string {
   const svgNs = 'http://www.w3.org/2000/svg';
   const xhtmlNs = 'http://www.w3.org/1999/xhtml';
@@ -146,10 +175,22 @@ function buildSvgDocument(html: string, width: number, height: number, css: stri
   return new XMLSerializer().serializeToString(svg);
 }
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = url;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export function PreviewPane({ latex, onToast }: Props) {
   const previewRef = useRef<HTMLDivElement>(null);
   const [preview, setPreview] = useState<PreviewState>({ html: '', error: '' });
   const [exportFont, setExportFont] = useState(EXPORT_FONTS[0].value);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
   const selectedFont = EXPORT_FONTS.find((font) => font.value === exportFont) ?? EXPORT_FONTS[0];
   const previewFontStyle = selectedFont.stack
     ? ({ '--formula-font-family': selectedFont.stack, fontFamily: selectedFont.stack } as CSSProperties)
@@ -161,6 +202,17 @@ export function PreviewPane({ latex, onToast }: Props) {
     }, 250);
     return () => window.clearTimeout(timer);
   }, [latex]);
+
+  useEffect(() => {
+    if (!exportOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setExportOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [exportOpen]);
 
   function ensureExportable(): boolean {
     if (preview.error) {
@@ -174,7 +226,6 @@ export function PreviewPane({ latex, onToast }: Props) {
     return true;
   }
 
-  /** Build SVG with foreignObject containing the KaTeX HTML + page CSS. */
   function buildSvgForeignObject(html: string): { svg: string; width: number; height: number } {
     const container = buildExportContainer(html, selectedFont.stack);
     try {
@@ -215,15 +266,35 @@ export function PreviewPane({ latex, onToast }: Props) {
     try {
       const { svg } = buildSvgForeignObject(preview.html);
       const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.download = 'formula.svg';
-      link.href = url;
-      link.click();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      downloadBlob(blob, 'formula.svg');
       onToast('SVG 已导出');
     } catch {
       onToast('SVG 导出失败，请重试');
+    }
+  }
+
+  async function handleExport(format: string, needsBackend: boolean) {
+    setExportOpen(false);
+    if (!latex.trim()) {
+      onToast('暂无可导出的公式');
+      return;
+    }
+    setExporting(true);
+    try {
+      if (!needsBackend) {
+        const result = await exportFormulaText(format, latex);
+        await navigator.clipboard.writeText(result.content);
+        onToast('已复制到剪贴板');
+      } else {
+        const ext = format === 'docx' ? 'docx' : format === 'pdf' ? 'pdf' : 'html';
+        const blob = await exportFormulaFile(format, latex);
+        downloadBlob(blob, `formula.${ext}`);
+        onToast(`${format.toUpperCase()} 已导出`);
+      }
+    } catch (err) {
+      onToast(err instanceof Error ? err.message : '导出失败');
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -245,6 +316,35 @@ export function PreviewPane({ latex, onToast }: Props) {
           </select>
           <button onClick={exportPng} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200">PNG</button>
           <button onClick={exportSvg} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200">SVG</button>
+          <div ref={exportMenuRef} className="relative">
+            <button
+              onClick={() => setExportOpen(!exportOpen)}
+              disabled={exporting}
+              className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {exporting ? '导出中...' : '导出'}
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {exportOpen && (
+              <div className="absolute right-0 top-full z-20 mt-1 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl dark:border-slate-700 dark:bg-slate-800">
+                {EXPORT_FORMATS.map((group) => (
+                  <div key={group.group}>
+                    <div className="px-3 py-1.5 text-xs font-semibold text-slate-400 dark:text-slate-500">{group.group}</div>
+                    {group.items.map((item) => (
+                      <button
+                        key={item.value}
+                        onClick={() => handleExport(item.value, item.needsBackend)}
+                        className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                    <div className="mx-2 border-t border-slate-100 dark:border-slate-700" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex flex-1 items-center justify-center overflow-auto rounded-b-3xl bg-white p-8 text-slate-900">

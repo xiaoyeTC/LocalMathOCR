@@ -53,6 +53,8 @@
 - **主题定制** — 8 种预设配色方案，卡片式 / 下拉菜单式两种模型选择器风格
 - **设置面板** — 可视化配置默认模型、预处理、模型开关等参数，保存后即时生效无需重启
 - **高级图片预处理** — 深色背景反转、自适应二值化、去噪、倾斜校正、自动裁剪，可通过设置面板开关
+- **MathLive 可视化编辑器** — 虚拟数学键盘输入，支持与源码编辑模式切换
+- **多格式导出** — LaTeX/Markdown/MathML/HTML/Word/PDF 等 12 种格式，文本格式一键复制，文件格式后端转换下载
 - **历史记录隔离** — 按浏览器 Session 隔离，不同标签页互不影响
 - **移动端适配** — 响应式布局，手机端可正常使用全部核心功能
 
@@ -65,8 +67,8 @@
 | 上传识别 | 拖拽、上传、粘贴图片，一键识别公式 |
 | 手动框选 | 上传后进入裁剪模式，可拖拽选区框选纯公式区域 |
 | 置信度提示 | 识别置信度低于 80% 时显示警告条 |
-| LaTeX 编辑器 | CodeMirror 编辑源码，支持语法高亮 |
-| 实时预览 | KaTeX 渲染，支持 7 种字体切换 |
+| LaTeX 编辑器 | CodeMirror 源码编辑 + MathLive 可视化编辑，支持模式切换 |
+| 实时预览 | KaTeX 渲染，支持 7 种字体切换，12 种格式导出 |
 | 导出 | PNG / SVG 导出，可选字体 |
 | 历史记录 | 按浏览器隔离，支持删除与清空 |
 | 模型选择 | 卡片式或下拉菜单式，展示状态、显存需求与切换按钮 |
@@ -91,6 +93,7 @@
 | [CodeMirror](https://github.com/codemirror/dev) | 代码编辑器 |
 | [KaTeX](https://github.com/KaTeX/KaTeX) | LaTeX 数学公式渲染 |
 | [react-image-crop](https://github.com/DominicTobias/react-image-crop) | 图片裁剪 |
+| [MathLive](https://github.com/nicolewhite/mathlive) | 可视化数学公式编辑 |
 
 ### 后端
 
@@ -179,6 +182,9 @@ cd frontend && npm install && npm run dev
 | `HF_ENDPOINT` | 空 | HuggingFace 镜像地址 |
 | `ADMIN_PASSWORD` | 空 | 管理员密码（设置后需登录才能修改高级设置） |
 | `ENABLE_FORMULA_PREPROCESSING` | `false` | 启用高级图片预处理（深色反转、二值化、去噪、倾斜校正） |
+| `ENABLE_PANDOC` | `false` | 启用 Pandoc 导出（Word/PDF/HTML） |
+| `PANDOC_PATH` | `pandoc` | Pandoc 可执行文件路径 |
+| `XELATEX_PATH` | `xelatex` | XeLaTeX 可执行文件路径（PDF 导出需要） |
 | `DATABASE_URL` | `sqlite+aiosqlite:///./data/history.db` | 数据库地址 |
 | `MODEL_DIR` | `./models` | 模型缓存目录 |
 | `CORS_ORIGINS` | `localhost:5173,...` | 允许跨域来源 |
@@ -201,6 +207,7 @@ cd frontend && npm install && npm run dev
 | GET | `/api/models/events` | SSE 模型状态流 |
 | POST | `/api/models/{id}/activate` | 切换模型 |
 | POST | `/api/ocr` | 识别公式（file, preprocess, model_id） |
+| POST | `/api/export/{format}` | 导出公式（latex, 支持 12 种格式） |
 | GET | `/api/history` | 获取历史记录 |
 | DELETE | `/api/history` | 清空历史 |
 | GET | `/api/settings` | 获取设置 |

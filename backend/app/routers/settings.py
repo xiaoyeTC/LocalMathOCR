@@ -48,6 +48,7 @@ ADMIN_SETTINGS = {
     "app_device", "enable_pix2text", "enable_latex_ocr", "enable_uni_equation",
     "preload_models", "max_loaded_models", "model_download_timeout_sec",
     "p2t_mfr_model", "hf_endpoint", "cors_origins", "database_url", "model_dir",
+    "enable_pandoc", "pandoc_path", "xelatex_path",
 }
 
 
@@ -91,6 +92,9 @@ async def get_all_settings(request: Request):
             "model_download_timeout_sec": settings.model_download_timeout_sec,
             "p2t_mfr_model": settings.p2t_mfr_model,
             "hf_endpoint": settings.hf_endpoint,
+            "enable_pandoc": settings.enable_pandoc,
+            "pandoc_path": settings.pandoc_path,
+            "xelatex_path": settings.xelatex_path,
         })
 
     return success({"settings": data, "is_admin": is_admin, "has_admin_password": bool(settings.admin_password)})

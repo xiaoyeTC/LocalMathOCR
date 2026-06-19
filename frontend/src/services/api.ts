@@ -50,10 +50,20 @@ export class ApiError extends Error {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
+function getSessionId(): string {
+  try {
+    return localStorage.getItem('localmathocr-session-id') || 'default';
+  } catch {
+    return 'default';
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
+  const headers = new Headers(init?.headers);
+  headers.set('X-Session-ID', getSessionId());
   try {
-    res = await fetch(`${API_BASE_URL}${path}`, init);
+    res = await fetch(`${API_BASE_URL}${path}`, { ...init, headers });
   } catch {
     throw new Error('后端服务未连接：请确认 Backend 窗口已启动，并可访问 http://127.0.0.1:8000/health');
   }
@@ -110,4 +120,30 @@ export async function clearHistory(): Promise<{ deleted: number }> {
 
 export async function deleteHistory(id: number): Promise<{ deleted: boolean }> {
   return request<{ deleted: boolean }>(`/history/${id}`, { method: 'DELETE' });
+}
+
+export type ExportTextResult = { content: string; mime: string };
+
+export async function exportFormulaText(format: string, latex: string): Promise<ExportTextResult> {
+  return request<ExportTextResult>(`/export/${format}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ latex }),
+  });
+}
+
+export async function exportFormulaFile(format: string, latex: string): Promise<Blob> {
+  const headers = new Headers({ 'Content-Type': 'application/json', 'X-Session-ID': getSessionId() });
+  const res = await fetch(`${API_BASE_URL}/export/${format}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ latex }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    const detail = body?.detail;
+    const message = typeof detail === 'string' ? detail : detail?.message || `Export failed: HTTP ${res.status}`;
+    throw new Error(message);
+  }
+  return res.blob();
 }

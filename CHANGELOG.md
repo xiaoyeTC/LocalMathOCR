@@ -1,5 +1,27 @@
 # 更新日志
 
+## [2.6.0]
+
+### 新增
+
+#### MathLive 可视化编辑器
+- `LatexEditor` 新增 MathLive 可视化编辑模式，支持虚拟数学键盘输入。
+- 新增「可视化 / 源码」模式切换按钮，CodeMirror 保留为源码编辑模式。
+- MathLive 与 Zustand store 双向绑定：`onInput` 事件更新 store，外部 value 变化同步到 MathLive。
+- TypeScript 新增 `math-field` JSX IntrinsicElements 声明。
+
+#### Pandoc 多格式导出
+- 新增 `POST /api/export/{format}` 后端路由，支持 12 种导出格式。
+- 文本格式（LaTeX inline/display/equation、Markdown inline/block、Plain Text）前端直接转换并复制到剪贴板。
+- MathML 格式通过 Pandoc 转换。
+- 文件格式（Word `.docx`、PDF、HTML）通过 Pandoc 后端转换并下载，PDF 使用 XeLaTeX 引擎。
+- 新增 `ENABLE_PANDOC`、`PANDOC_PATH`、`XELATEX_PATH` 环境变量，管理员可在设置面板配置。
+- 前端 PreviewPane 导出区域新增下拉菜单，按分组展示所有导出格式。
+- 新增 `exportFormulaText` 和 `exportFormulaFile` API 函数。
+
+### 依赖
+- 新增 `mathlive` 前端数学编辑库。
+
 ## [2.5.0]
 
 ### 修复

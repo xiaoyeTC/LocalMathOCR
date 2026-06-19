@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     p2t_mfr_model: str = "mfr-1.5"
     hf_endpoint: str = ""
     enable_formula_preprocessing: bool = False
+    enable_pandoc: bool = False
+    pandoc_path: str = "pandoc"
+    xelatex_path: str = "xelatex"
     admin_password: str = ""
 
     model_config = SettingsConfigDict(
