@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ConfidenceBanner } from './components/ConfidenceBanner';
 import { ComputePanel } from './components/ComputePanel';
 import { FormulaWorkspace } from './components/FormulaWorkspace';
@@ -105,12 +105,16 @@ export default function App() {
     return () => source.close();
   }, [applyModelPayload, setModelStatus, showToast]);
 
+  const switchingRef = useRef(false);
+
   const handleSelectModel = useCallback(async (modelId: string) => {
+    if (switchingRef.current) return;
     const target = models.find((model) => model.id === modelId);
     if (!target || target.status !== 'ready') {
       showToast(target?.message || '模型尚未就绪');
       return;
     }
+    switchingRef.current = true;
     setSelectedModelId(modelId);
     try {
       await activateModel(modelId);
@@ -118,6 +122,8 @@ export default function App() {
       await refreshModels();
     } catch (error) {
       showToast(error instanceof Error ? error.message : '模型切换失败');
+    } finally {
+      switchingRef.current = false;
     }
   }, [models, refreshModels, setSelectedModelId, showToast]);
 
@@ -132,6 +138,7 @@ export default function App() {
   }, [models, preprocess, refreshHistory, refreshModels, setConfidence, setLatex, showToast]);
 
   const handleFile = useCallback((file: File) => {
+    if (loading) return;
     if (modelStatus.status === 'downloading') {
       showToast('模型正在下载或加载，请稍候');
       return;

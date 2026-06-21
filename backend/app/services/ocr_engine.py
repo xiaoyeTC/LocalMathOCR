@@ -119,13 +119,22 @@ class BaseOCREngine:
         self.status = "unloaded"
         self.message = "model is unloaded"
         gc.collect()
+        self._clear_cuda_cache()
+
+    def _clear_cuda_cache(self) -> None:
         try:
             import torch
-
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except Exception:
             pass
+
+    def _handle_oom(self, exc: Exception) -> None:
+        self.status = "error"
+        self.message = f"GPU 内存不足: {exc}"
+        self._model = None
+        gc.collect()
+        self._clear_cuda_cache()
 
 
 HF_MIRROR = "https://hf-mirror.com"
@@ -243,6 +252,10 @@ class Pix2TextEngine(BaseOCREngine):
                 inference_time_ms=int((time.perf_counter() - started) * 1000),
                 variant=variant,
             )
+        except Exception as exc:
+            if "out of memory" in str(exc).lower() or "cuda" in str(exc).lower():
+                self._handle_oom(exc)
+            raise
         finally:
             gc.collect()
 
@@ -384,14 +397,13 @@ class LatexOCREngine(BaseOCREngine):
                 inference_time_ms=int((time.perf_counter() - started) * 1000),
                 variant=variant,
             )
+        except Exception as exc:
+            if "out of memory" in str(exc).lower() or "cuda" in str(exc).lower():
+                self._handle_oom(exc)
+            raise
         finally:
             gc.collect()
-            try:
-                import torch
-                if self.device == "cuda" and torch.cuda.is_available():
-                    torch.cuda.empty_cache()
-            except Exception:
-                pass
+            self._clear_cuda_cache()
 
 
 class UniEquationEngine(BaseOCREngine):
@@ -476,8 +488,19 @@ class UniEquationEngine(BaseOCREngine):
             self.processor = None
             self.tokenizer = None
 
+    def unload(self) -> None:
+        self._model = None
+        self.processor = None
+        self.tokenizer = None
+        self.status = "unloaded"
+        self.message = "model is unloaded"
+        gc.collect()
+        self._clear_cuda_cache()
+
     def _predict_sync(self, image: Image.Image, variant: str = "default") -> OCRPrediction:
         started = time.perf_counter()
+        inputs = None
+        output_ids = None
         try:
             import torch
 
@@ -493,12 +516,11 @@ class UniEquationEngine(BaseOCREngine):
                 inference_time_ms=int((time.perf_counter() - started) * 1000),
                 variant=variant,
             )
+        except Exception as exc:
+            if "out of memory" in str(exc).lower() or "cuda" in str(exc).lower():
+                self._handle_oom(exc)
+            raise
         finally:
+            del inputs, output_ids
             gc.collect()
-            try:
-                import torch
-
-                if self.device == "cuda" and torch.cuda.is_available():
-                    torch.cuda.empty_cache()
-            except Exception:
-                pass
+            self._clear_cuda_cache()

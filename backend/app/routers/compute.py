@@ -1,3 +1,4 @@
+import asyncio
 import re
 
 from fastapi import APIRouter, HTTPException
@@ -6,6 +7,9 @@ from app.config import get_settings
 from app.routers.common import success
 
 router = APIRouter(prefix="/api/compute", tags=["compute"])
+
+MAX_LATEX_LENGTH = 2000
+COMPUTE_TIMEOUT_SEC = 10
 
 
 def _latex_to_sympy_str(latex: str) -> str:
@@ -170,6 +174,8 @@ async def compute(body: dict):
 
     if not latex:
         raise HTTPException(status_code=400, detail="latex 字段不能为空")
+    if len(latex) > MAX_LATEX_LENGTH:
+        raise HTTPException(status_code=400, detail=f"LaTeX 表达式过长（最大 {MAX_LATEX_LENGTH} 字符）")
     if not operation:
         raise HTTPException(status_code=400, detail="operation 字段不能为空")
 
@@ -184,13 +190,21 @@ async def compute(body: dict):
 
     try:
         import sympy
-        result = _do_compute(expr, operation)
-        if isinstance(result, list):
-            result_latex = ", ".join(sympy.latex(r) for r in result)
-            result_text = ", ".join(str(r) for r in result)
-        else:
-            result_latex = sympy.latex(result)
-            result_text = str(result)
+
+        loop = asyncio.get_running_loop()
+
+        def _run_compute():
+            result = _do_compute(expr, operation)
+            if isinstance(result, list):
+                return ", ".join(sympy.latex(r) for r in result), ", ".join(str(r) for r in result)
+            return sympy.latex(result), str(result)
+
+        result_latex, result_text = await asyncio.wait_for(
+            loop.run_in_executor(None, _run_compute),
+            timeout=COMPUTE_TIMEOUT_SEC,
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=408, detail=f"计算超时（>{COMPUTE_TIMEOUT_SEC}秒），请简化表达式后重试")
     except Exception as exc:
         raise HTTPException(status_code=422, detail=f"计算失败: {exc}") from exc
 

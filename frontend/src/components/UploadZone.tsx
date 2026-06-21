@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import type { ModelStatus } from '../services/api';
-import { recognizeFormula } from '../services/api';
+import { recognizeFormula, getPdfInfo, renderPdfPage } from '../services/api';
 import { HandwritingPad } from './HandwritingPad';
 
 type Props = {
@@ -98,13 +98,9 @@ function PdfExtractor({ onInsert, onToast, onRecognized }: { onInsert: (l: strin
   const handleUpload = useCallback(async (file: File) => {
     setLoading(true);
     try {
-      const form = new FormData();
-      form.append('file', file);
-      const res = await fetch('/api/pdf/info', { method: 'POST', body: form });
-      const data = await res.json();
-      if (data.code !== 200) throw new Error(data.message || '上传失败');
-      setPdfBase64(data.data.pdf_base64);
-      setTotalPages(data.data.total_pages);
+      const data = await getPdfInfo(file);
+      setPdfBase64(data.pdf_base64);
+      setTotalPages(data.total_pages);
       setCurrentPage(1);
       setResults([]);
       setZoom(1);
@@ -126,15 +122,9 @@ function PdfExtractor({ onInsert, onToast, onRecognized }: { onInsert: (l: strin
     if (!pdfBase64) return;
     setRendering(true);
     try {
-      const res = await fetch('/api/pdf/render', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pdf_base64: pdfBase64, page, dpi: 200 }),
-      });
-      const data = await res.json();
-      if (data.code !== 200) throw new Error(data.message || '渲染失败');
-      setPageImage(data.data.image_base64);
-      setPageNaturalSize({ w: data.data.width, h: data.data.height });
+      const data = await renderPdfPage(pdfBase64, page, 200);
+      setPageImage(data.image_base64);
+      setPageNaturalSize({ w: data.width, h: data.height });
     } catch (err) {
       onToast(err instanceof Error ? err.message : '渲染失败');
     } finally {

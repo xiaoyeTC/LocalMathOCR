@@ -419,10 +419,10 @@ export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
       const html = getExportHtml()!;
       const { svg, width, height } = buildSvgForeignObject(html);
       const canvas = await svgToCanvas(svg, width, height, window.devicePixelRatio || 2);
-      const link = document.createElement('a');
-      link.download = 'formula.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Canvas toBlob failed')), 'image/png');
+      });
+      downloadBlob(blob, 'formula.png');
       onToast('PNG 已导出');
     } catch { onToast('PNG 导出失败'); }
   }

@@ -1,5 +1,46 @@
 # 更新日志
 
+## [3.0.0]
+
+### 修复
+
+#### 健壮性与防御性编程（全面审查）
+
+**输入验证与边界控制**
+- 新增 `validate_image_magic()`：通过文件头 magic bytes 验证真实图片类型（JPG/PNG/WebP），防止伪造 content-type 上传畸形文件。
+- 新增 `MAX_IMAGE_PIXELS = 16MP`：`read_image()` 校验图片像素总数，防御解压炸弹（1×1 PNG 解压为 50000×50000）。
+- 新增 `MAX_PROCESS_LONG_EDGE = 2048`：`FormulaPreprocessor.process()` 和 `enhance_formula_image()` 处理前自动缩放大图，防止 `fastNlMeansDenoising` 在超大图上卡死。
+- 新增 PDF 页数限制 `MAX_PAGES = 50`、DPI 上限 `MAX_DPI = 600`，防止畸形 PDF 和超高 DPI 导致内存爆炸。
+- 新增 LaTeX 输入长度限制 `MAX_LATEX_LENGTH = 2000`，防止 SymPy 正则回溯。
+- `read_image()` 捕获 `PIL.UnidentifiedImageError`，返回 400 而非 500。
+- `read_image()` 的 EXIF 旋转单独 try/except，畸形 EXIF 不影响主流程。
+
+**异步安全与事件循环**
+- `compute.py`：SymPy 计算改为 `run_in_executor` + `asyncio.wait_for(timeout=10)`，防止 `sympy.integrate` 等无限阻塞事件循环。
+- `ocr.py`：`preprocess_image`、`enhance_formula_image`、`FormulaPreprocessor.process`、`make_thumbnail_data_url` 全部改为 `run_in_executor` 异步执行。
+- `pdf.py`：`fitz.open`/`get_pixmap` 改为 `run_in_executor` + `wait_for(timeout=30)`，防止 PDF 渲染阻塞。
+- OCR 历史写入包裹 `try/except`，DB 失败不影响识别结果返回。
+
+**GPU OOM 捕获与恢复**
+- 三个引擎（Pix2Text、LaTeX_OCR、Uni-Equation）的 `_predict_sync` 新增 `torch.cuda.OutOfMemoryError` 捕获。
+- OOM 触发 `_handle_oom()`：标记模型为 error 状态、释放模型引用、`gc.collect()` + `torch.cuda.empty_cache()`，防止后续请求持续 OOM。
+- 新增 `_clear_cuda_cache()` 公共方法，消除 3 处重复的 CUDA 清理代码。
+- UniEquation `_predict_sync` 的 `finally` 中显式 `del inputs, output_ids`，确保 Tensor 在 GC 前释放。
+- UniEquation `unload()` 清理 `self.processor` 和 `self.tokenizer`。
+
+**资源与内存优化**
+- `preprocessed_image_base64` 默认不再发送（`return_preprocessed_image` 默认改为 `False`），减少每次 OCR 响应的无用 base64 传输。
+- `preprocess_image` 和 `make_thumbnail_data_url` 支持 `predecoded` 参数，复用已解码的 PIL Image，消除同一图片的 3 次重复解码。
+- PNG 导出从 `canvas.toDataURL()` 改为 `canvas.toBlob()` + `URL.createObjectURL()`，内存占用降低约 33%。
+- `pdf.py` 的 `fitz.open()` 使用 `try/finally` 确保 `doc.close()`。
+
+**前端防御性增强**
+- `api.ts` 所有 `fetch` 请求添加 `AbortController` + 超时（通用 30s、OCR 120s、PDF 60s、渲染 30s）。
+- `api.ts` 校验响应 `body.data` 存在性，防止后端返回畸形 JSON 导致 `undefined` 类型传递。
+- 模型切换添加 `switchingRef` 防抖守卫，防止连点触发多次并发 `activateModel`。
+- `handleFile` 添加 `loading` 守卫，防止识别进行中重复提交。
+- PDF 上传和渲染改用 `api.ts` 的 `getPdfInfo()` + `renderPdfPage()` 统一函数（带超时和 session header）。
+
 ## [2.9.1]
 
 ### 新增

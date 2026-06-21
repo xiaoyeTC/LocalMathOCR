@@ -19,6 +19,8 @@ import cv2
 import numpy as np
 from PIL import Image
 
+MAX_PROCESS_LONG_EDGE = 2048
+
 
 # ─────────────────────────── 配置 ───────────────────────────
 
@@ -97,6 +99,12 @@ class FormulaPreprocessor:
         """
         if config is None:
             config = FormulaPreprocessConfig()
+
+        w, h = image.size
+        long_edge = max(w, h)
+        if long_edge > MAX_PROCESS_LONG_EDGE:
+            scale = MAX_PROCESS_LONG_EDGE / long_edge
+            image = image.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
 
         # PIL → OpenCV BGR/Gray
         img = self._pil_to_cv(image)

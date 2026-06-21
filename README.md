@@ -290,3 +290,9 @@ LocalMathOCR/
 ## 许可
 
 本项目采用 MIT License。
+
+---
+
+## 更新日志
+
+详见 [CHANGELOG.md](CHANGELOG.md)，记录每个版本的新增功能、修复和优化。

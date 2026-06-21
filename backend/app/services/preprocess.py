@@ -14,10 +14,39 @@ class PreprocessResult:
     data_url: str
 
 
+MAX_IMAGE_PIXELS = 4096 * 4096
+Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
+
+_MAGIC_SIGNATURES = {
+    b'\xff\xd8\xff': 'image/jpeg',
+    b'\x89PNG\r\n\x1a\n': 'image/png',
+    b'RIFF': 'image/webp',
+}
+
+
+def validate_image_magic(file_bytes: bytes) -> str:
+    """通过文件头 magic bytes 验证真实图片类型，防止伪造 content-type。"""
+    for sig, mime in _MAGIC_SIGNATURES.items():
+        if file_bytes[:len(sig)] == sig:
+            if mime == 'image/webp' and file_bytes[8:12] != b'WEBP':
+                continue
+            return mime
+    raise ValueError("文件头不是有效的图片格式（仅支持 JPG/PNG/WebP）")
+
+
 def read_image(file_bytes: bytes) -> Image.Image:
-    image = Image.open(io.BytesIO(file_bytes))
-    image = ImageOps.exif_transpose(image).convert("RGB")
-    return image
+    try:
+        image = Image.open(io.BytesIO(file_bytes))
+    except Exception as exc:
+        raise ValueError(f"无法识别图片格式: {exc}") from exc
+    try:
+        image = ImageOps.exif_transpose(image)
+    except Exception:
+        pass
+    w, h = image.size
+    if w * h > MAX_IMAGE_PIXELS:
+        raise ValueError(f"图片分辨率过大: {w}x{h}（最大 {int(MAX_IMAGE_PIXELS/1024/1024)}MP）")
+    return image.convert("RGB")
 
 
 def pil_to_cv(image: Image.Image) -> np.ndarray:
@@ -46,8 +75,8 @@ def image_to_data_url(image: Image.Image) -> str:
     return f"data:image/png;base64,{encoded}"
 
 
-def preprocess_image(file_bytes: bytes) -> PreprocessResult:
-    original = read_image(file_bytes)
+def preprocess_image(file_bytes: bytes, predecoded: Image.Image | None = None) -> PreprocessResult:
+    original = predecoded if predecoded is not None else read_image(file_bytes)
     cv_image = pil_to_cv(original)
     gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
@@ -96,6 +125,12 @@ def enhance_formula_image(image: Image.Image) -> Image.Image:
     如果任何步骤失败，返回原图，确保不会导致服务崩溃。
     """
     try:
+        w, h = image.size
+        long_edge = max(w, h)
+        if long_edge > 2048:
+            scale = 2048 / long_edge
+            image = image.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
+
         # 第1步：PIL Image -> OpenCV ndarray (灰度)
         gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
 
@@ -148,7 +183,7 @@ def enhance_formula_image(image: Image.Image) -> Image.Image:
         return image
 
 
-def make_thumbnail_data_url(file_bytes: bytes, max_size: tuple[int, int] = (320, 180)) -> str:
-    image = read_image(file_bytes)
+def make_thumbnail_data_url(file_bytes: bytes, max_size: tuple[int, int] = (320, 180), predecoded: Image.Image | None = None) -> str:
+    image = predecoded.copy() if predecoded is not None else read_image(file_bytes)
     image.thumbnail(max_size)
     return image_to_data_url(image)

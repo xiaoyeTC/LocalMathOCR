@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from starlette.responses import StreamingResponse
 
@@ -6,7 +8,7 @@ from app.routers.common import get_model_manager, success
 from app.services.db import AsyncSessionLocal, create_history
 from app.services.postprocess import post_processor
 from app.services.formula_preprocessor import FormulaPreprocessor, FormulaPreprocessConfig
-from app.services.preprocess import enhance_formula_image, make_thumbnail_data_url, preprocess_image, read_image
+from app.services.preprocess import enhance_formula_image, make_thumbnail_data_url, preprocess_image, read_image, validate_image_magic
 
 router = APIRouter(prefix="/api", tags=["ocr"])
 
@@ -106,8 +108,17 @@ async def _recognize_with_model(
     if len(file_bytes) > settings.max_upload_mb * 1024 * 1024:
         raise HTTPException(status_code=413, detail=f"Image must be smaller than {settings.max_upload_mb}MB")
 
-    original_image = read_image(file_bytes)
-    processed = preprocess_image(file_bytes)
+    try:
+        validate_image_magic(file_bytes)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    try:
+        original_image = read_image(file_bytes)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    loop = asyncio.get_running_loop()
+    processed = await loop.run_in_executor(None, preprocess_image, file_bytes, original_image)
     processed_data_url = processed.data_url if settings.return_preprocessed_image else None
     manager = get_model_manager(request)
 
@@ -115,11 +126,11 @@ async def _recognize_with_model(
         predictions = [await engine.predict(original_image, "original")]
         if preprocess and _is_suspicious_latex(predictions[0].latex):
             predictions.append(await engine.predict(processed.image, "preprocessed"))
-            enhanced_image = enhance_formula_image(original_image)
+            enhanced_image = await loop.run_in_executor(None, enhance_formula_image, original_image)
             predictions.append(await engine.predict(enhanced_image, "enhanced"))
         if settings.enable_formula_preprocessing:
             fp = FormulaPreprocessor()
-            fp_result = fp.process(original_image)
+            fp_result = await loop.run_in_executor(None, fp.process, original_image)
             predictions.append(await engine.predict(fp_result, "formula_preprocessed"))
         prediction = max(predictions, key=lambda item: _latex_score(item.latex))
         return engine.model_id, prediction
@@ -133,10 +144,13 @@ async def _recognize_with_model(
 
     cleaned_latex = post_processor.clean(prediction.latex)
 
-    thumbnail = make_thumbnail_data_url(file_bytes)
     session_id = request.headers.get("X-Session-ID", "default")
-    async with AsyncSessionLocal() as session:
-        await create_history(session, cleaned_latex, thumbnail, session_id=session_id)
+    try:
+        thumbnail = await loop.run_in_executor(None, make_thumbnail_data_url, file_bytes, (320, 180), original_image)
+        async with AsyncSessionLocal() as session:
+            await create_history(session, cleaned_latex, thumbnail, session_id=session_id)
+    except Exception:
+        pass
 
     return success({
         "latex": cleaned_latex,

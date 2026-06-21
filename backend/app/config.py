@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./data/history.db"
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080,http://127.0.0.1:8080"
     max_upload_mb: int = 10
-    return_preprocessed_image: bool = Field(default=True, alias="preprocess")
+    return_preprocessed_image: bool = Field(default=False, alias="preprocess")
     default_model_id: str = "pix2text"
     enable_pix2text: bool = True
     enable_latex_ocr: bool = True
