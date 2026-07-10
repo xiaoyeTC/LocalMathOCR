@@ -262,7 +262,7 @@ function PdfExtractor({ onInsert, onToast, onRecognized }: { onInsert: (l: strin
           <div className="max-h-[440px] space-y-2 overflow-y-auto">
             {results.length === 0 && !recognizing && <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400 dark:border-slate-700">点击「框选公式」后在页面上拖拽</div>}
             {results.map((r, i) => (
-              <div key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-slate-800">
+              <div key={`${r.page}-${i}-${r.latex.slice(0, 10)}`} className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-slate-800">
                 <div className="mb-1 flex items-center gap-1.5">
                   <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">P{r.page}</span>
                 </div>

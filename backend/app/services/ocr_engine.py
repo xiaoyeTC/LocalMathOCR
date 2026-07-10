@@ -3,6 +3,7 @@ import gc
 import math
 import os
 import time
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Literal
@@ -24,7 +25,7 @@ class OCRPrediction:
     variant: str = "default"
 
 
-class BaseOCREngine:
+class BaseOCREngine(ABC):
     def __init__(self, model_id: str) -> None:
         self.model_id = model_id
         self.settings = get_settings()
@@ -91,8 +92,9 @@ class BaseOCREngine:
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self.load_sync)
 
+    @abstractmethod
     def load_sync(self) -> None:
-        raise NotImplementedError
+        ...
 
     def status_payload(self) -> dict:
         info = self._torch_cuda_info()
@@ -111,8 +113,9 @@ class BaseOCREngine:
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(None, self._predict_sync, image, variant)
 
+    @abstractmethod
     def _predict_sync(self, image: Image.Image, variant: str = "default") -> OCRPrediction:
-        raise NotImplementedError
+        ...
 
     def unload(self) -> None:
         self._model = None

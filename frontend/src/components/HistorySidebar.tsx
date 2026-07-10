@@ -27,7 +27,13 @@ export function HistorySidebar({ history, onSelect, onDelete, onClear }: Props) 
         {history.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">暂无识别历史</p>}
         {history.map((item) => (
           <div key={item.id} className="rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
-            {item.image_base64 && <img src={item.image_base64} alt="formula" className="mb-2 h-20 w-full rounded-xl object-contain bg-slate-50 dark:bg-slate-950" />}
+            {item.image_base64 && (
+              <img
+                src={item.image_base64.startsWith('data:') ? item.image_base64 : `data:image/png;base64,${item.image_base64}`}
+                alt="formula"
+                className="mb-2 h-20 w-full rounded-xl object-contain bg-slate-50 dark:bg-slate-950"
+              />
+            )}
             <button onClick={() => onSelect(item.latex)} className="block w-full truncate text-left font-mono text-sm text-slate-700 hover:text-primary dark:text-slate-200" title={item.latex}>
               {item.latex}
             </button>

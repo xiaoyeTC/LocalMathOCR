@@ -180,7 +180,7 @@ async def ocr(
     return await _recognize_with_model(request, file, preprocess, model_id)
 
 
-@router.post("/recognize")
+@router.post("/recognize", deprecated=True)
 async def recognize(
     request: Request,
     file: UploadFile = File(...),

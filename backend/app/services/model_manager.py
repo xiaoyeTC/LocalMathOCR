@@ -246,13 +246,17 @@ class ModelManager:
             self.unsubscribe(queue)
 
     def _progress_callback(self, model_id: str):
+        import threading
+        progress_lock = threading.Lock()
+
         def callback(progress: int, message: str) -> None:
             runtime = self._runtimes.get(model_id)
             if runtime is None:
                 return
-            runtime.state = "downloading"
-            runtime.progress = max(0, min(100, progress))
-            runtime.message = message
+            with progress_lock:
+                runtime.state = "downloading"
+                runtime.progress = max(0, min(100, progress))
+                runtime.message = message
             if self._loop and self._loop.is_running():
                 try:
                     self._loop.call_soon_threadsafe(lambda: asyncio.ensure_future(self.broadcast()))
