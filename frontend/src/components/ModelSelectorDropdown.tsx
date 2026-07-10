@@ -78,7 +78,7 @@ export function ModelSelectorDropdown({ models, selectedModelId, disabled, onCha
           <div className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
             {models.map((rawModel) => {
               const model = displayModel(rawModel);
-              const selected = model.id === selectedModelId;
+              const isSelected = model.id === selectedModelId;
               const disabledByState = disabled || model.status !== 'ready';
               return (
                 <button
@@ -87,14 +87,14 @@ export function ModelSelectorDropdown({ models, selectedModelId, disabled, onCha
                   disabled={disabledByState}
                   onClick={() => { onChange(model.id); setOpen(false); }}
                   className={`flex w-full items-start gap-3 px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                    selected ? 'bg-primary-light dark:bg-primary-light/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'
+                    isSelected ? 'bg-primary-light dark:bg-primary-light/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'
                   }`}
                 >
                   <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${statusColor(model.status)}`} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-slate-900 dark:text-white text-sm">{model.display_name}</span>
-                      {selected && <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-white">当前</span>}
+                      {isSelected && <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-white">当前</span>}
                     </div>
                     <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{model.description}</p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">

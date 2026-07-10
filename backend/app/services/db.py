@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from collections.abc import AsyncGenerator
 from pathlib import Path
 
 from sqlalchemy import DateTime, Integer, Text, delete, select, text
@@ -50,7 +51,7 @@ def _migrate_add_session_id(sync_conn) -> None:
             logging.getLogger(__name__).warning("Migration failed: %s", exc)
 
 
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         try:
             yield session

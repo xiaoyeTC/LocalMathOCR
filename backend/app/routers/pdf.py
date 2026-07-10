@@ -71,9 +71,6 @@ async def render_page(body: dict):
     if not pdf_base64:
         raise HTTPException(status_code=400, detail="pdf_base64 不能为空")
 
-    if dpi > MAX_DPI:
-        dpi = MAX_DPI
-
     try:
         pdf_bytes = base64.b64decode(pdf_base64)
     except Exception:
