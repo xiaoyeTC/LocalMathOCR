@@ -63,11 +63,15 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     settings = Settings()
     settings.model_dir.mkdir(parents=True, exist_ok=True)
+    return settings
+
+
+def apply_settings_env(settings: Settings) -> None:
+    """应用 Settings 中的环境变量副作用。仅在 lifespan 启动时调用。"""
     if settings.hf_endpoint:
         os.environ["HF_ENDPOINT"] = settings.hf_endpoint
     elif "HF_ENDPOINT" in os.environ:
         del os.environ["HF_ENDPOINT"]
-    return settings
 
 
 def clear_settings_cache() -> None:

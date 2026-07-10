@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.config import get_settings
+from app.config import get_settings, apply_settings_env
 from app.routers.compute import router as compute_router
 from app.routers.export import router as export_router
 from app.routers.pdf import router as pdf_router
@@ -43,6 +43,7 @@ class DynamicCORSMiddleware(BaseHTTPMiddleware):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    apply_settings_env(get_settings())
     await init_db()
     manager = ModelManager()
     app.state.model_manager = manager

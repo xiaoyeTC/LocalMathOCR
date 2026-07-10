@@ -48,6 +48,12 @@ def _convert_with_pandoc(latex: str, target_format: str) -> tuple[bytes, str, st
     settings = get_settings()
     pandoc = settings.pandoc_path
 
+    import shutil
+    pandoc_resolved = shutil.which(pandoc)
+    if not pandoc_resolved:
+        raise RuntimeError(f"pandoc 未安装或路径无效: {pandoc}")
+    pandoc = pandoc_resolved
+
     latex = _sanitize_latex_for_compile(latex)
 
     with tempfile.TemporaryDirectory() as tmpdir:
