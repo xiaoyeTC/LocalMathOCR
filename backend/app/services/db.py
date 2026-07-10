@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from pathlib import Path
 
-from sqlalchemy import DateTime, Integer, Text, delete, select
+from sqlalchemy import DateTime, Integer, Text, delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -40,16 +40,10 @@ async def init_db() -> None:
 
 def _migrate_add_session_id(sync_conn) -> None:
     try:
-        result = sync_conn.execute(
-            __import__('sqlalchemy').text("PRAGMA table_info(history_records)")
-        )
+        result = sync_conn.execute(text("PRAGMA table_info(history_records)"))
         columns = {row[1] for row in result}
         if 'session_id' not in columns:
-            sync_conn.execute(
-                __import__('sqlalchemy').text(
-                    "ALTER TABLE history_records ADD COLUMN session_id TEXT NOT NULL DEFAULT 'default'"
-                )
-            )
+            sync_conn.execute(text("ALTER TABLE history_records ADD COLUMN session_id TEXT NOT NULL DEFAULT 'default'"))
     except Exception as exc:
         if "duplicate column" not in str(exc).lower():
             import logging
@@ -58,7 +52,11 @@ def _migrate_add_session_id(sync_conn) -> None:
 
 async def get_session() -> AsyncSession:
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
 
 
 async def create_history(session: AsyncSession, latex: str, image_base64: str | None, session_id: str = "default") -> HistoryRecord:

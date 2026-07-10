@@ -2,13 +2,18 @@ import asyncio
 import re
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 
 from app.config import get_settings
 from app.routers.common import success
 
 router = APIRouter(prefix="/api/compute", tags=["compute"])
 
-MAX_LATEX_LENGTH = 2000
+
+class ComputeRequest(BaseModel):
+    latex: str = Field(..., min_length=1, max_length=2000)
+    operation: str = Field(..., min_length=1, max_length=50)
+
 COMPUTE_TIMEOUT_SEC = 10
 
 
@@ -174,20 +179,13 @@ def _do_compute(expr, operation: str):
 
 
 @router.post("/")
-async def compute(body: dict):
+async def compute(body: ComputeRequest):
     settings = get_settings()
     if not settings.enable_computation:
         raise HTTPException(status_code=501, detail="数学计算未启用。请在设置面板中开启。")
 
-    latex = body.get("latex", "").strip()
-    operation = body.get("operation", "").strip()
-
-    if not latex:
-        raise HTTPException(status_code=400, detail="latex 字段不能为空")
-    if len(latex) > MAX_LATEX_LENGTH:
-        raise HTTPException(status_code=400, detail=f"LaTeX 表达式过长（最大 {MAX_LATEX_LENGTH} 字符）")
-    if not operation:
-        raise HTTPException(status_code=400, detail="operation 字段不能为空")
+    latex = body.latex.strip()
+    operation = body.operation.strip()
 
     valid_ops = {"expand", "factor", "simplify", "solve", "diff", "integrate", "limit", "series"}
     if operation not in valid_ops:

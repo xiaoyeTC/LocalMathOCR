@@ -1,4 +1,5 @@
 import asyncio
+import re
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from starlette.responses import StreamingResponse
@@ -150,9 +151,8 @@ async def _recognize_with_model(
 
     cleaned_latex = post_processor.clean(prediction.latex)
 
-    import re as _re
     raw_session = request.headers.get("X-Session-ID", "default")
-    session_id = raw_session[:128] if _re.match(r'^[a-zA-Z0-9_-]+$', raw_session) else "default"
+    session_id = raw_session[:128] if re.match(r'^[a-zA-Z0-9_-]+$', raw_session) else "default"
     try:
         thumbnail = await loop.run_in_executor(None, make_thumbnail_data_url, file_bytes, (320, 180), original_image)
         async with AsyncSessionLocal() as session:

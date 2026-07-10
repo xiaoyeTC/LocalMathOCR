@@ -11,11 +11,16 @@ services:
       MODEL_DIR: /app/models
       CORS_ORIGINS: http://localhost:5173,http://localhost:8080
       DEFAULT_MODEL_ID: pix2tex
-      ENABLE_PIX2TEX: "true"
+      ENABLE_PIX2TEXT: "true"
       ENABLE_LATEX_OCR: "true"
       ENABLE_UNI_EQUATION: "false"
       MAX_LOADED_MODELS: "1"
       PRELOAD_MODELS: pix2tex
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - backend-data:/app/data
       - model-cache:/app/models
@@ -34,11 +39,16 @@ services:
       MODEL_DIR: /app/models
       CORS_ORIGINS: http://localhost:5173,http://localhost:8080
       DEFAULT_MODEL_ID: pix2tex
-      ENABLE_PIX2TEX: "true"
+      ENABLE_PIX2TEXT: "true"
       ENABLE_LATEX_OCR: "true"
       ENABLE_UNI_EQUATION: "false"
       MAX_LOADED_MODELS: "1"
       PRELOAD_MODELS: pix2tex
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - backend-data:/app/data
       - model-cache:/app/models
@@ -49,7 +59,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: all
+              count: 1
               capabilities: [gpu]
 
   frontend:
@@ -62,6 +72,11 @@ services:
     container_name: local-math-ocr-frontend
     ports:
       - "8080:80"
+    depends_on:
+      backend-cpu:
+        condition: service_healthy
+      backend-gpu:
+        condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

@@ -218,8 +218,12 @@ export default function App() {
   usePasteImage(handleFile);
 
   async function copyLatex() {
-    await navigator.clipboard.writeText(latex);
-    showToast('LaTeX 已复制');
+    try {
+      await navigator.clipboard.writeText(latex);
+      showToast('LaTeX 已复制');
+    } catch {
+      showToast('复制失败');
+    }
   }
 
   async function removeHistory(id: number) {
