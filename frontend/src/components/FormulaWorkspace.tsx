@@ -317,6 +317,8 @@ export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
     },
     [onChange],
   );
+  const handleChangeRef = useRef(handleChange);
+  handleChangeRef.current = handleChange;
 
   const latexValueRef = useRef(value);
   latexValueRef.current = value;
@@ -346,7 +348,7 @@ export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
         return;
       }
       if (attachedHandler) return;
-      attachedHandler = () => handleChange(el.value ?? '');
+      attachedHandler = () => handleChangeRef.current(el.value ?? '');
       el.addEventListener('input', attachedHandler);
       if (value) el.setValue(value);
     }
@@ -550,7 +552,7 @@ export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
       {mode === 'visual' ? (
         <div className="min-h-[320px] p-3 sm:p-4">
           {/* @ts-expect-error math-field is a MathLive custom element */}
-          <math-field ref={mfRef} style={{ width: '100%', minHeight: '280px', fontSize: '1.25em', padding: '8px', backgroundColor: 'inherit', color: 'inherit' }} />
+          <math-field ref={mfRef} className="mathfield-editor" />
         </div>
       ) : (
         <div className="grid min-h-[320px] lg:grid-cols-2">

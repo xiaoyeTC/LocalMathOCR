@@ -1,3 +1,5 @@
+import re
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,9 +10,12 @@ from app.services.db import clear_history, create_history, delete_history, get_s
 
 router = APIRouter(prefix="/api/history", tags=["history"])
 
+_SESSION_ID_RE = re.compile(r'^[a-zA-Z0-9_-]+$')
+
 
 def _get_session_id(request: Request) -> str:
-    return request.headers.get("X-Session-ID", "default")
+    raw = request.headers.get("X-Session-ID", "default")
+    return raw[:128] if _SESSION_ID_RE.match(raw) else "default"
 
 
 @router.get("")

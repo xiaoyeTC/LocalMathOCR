@@ -238,7 +238,7 @@ class FormulaPreprocessor:
         """
         # 前景像素（反转后非零部分）
         inv = 255 - gray
-        coords = np.column_stack(np.where(inv > 0))
+        coords = np.column_stack(np.where(inv > 0)[::-1])  # (row,col) → (x,y)
 
         if coords.size == 0:
             return gray

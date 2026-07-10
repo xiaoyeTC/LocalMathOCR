@@ -15,6 +15,20 @@ router = APIRouter(prefix="/api", tags=["ocr"])
 
 
 FALLBACK_MODEL_ID = "pix2text"
+_SESSION_ID_RE = re.compile(r'^[a-zA-Z0-9_-]+$')
+
+# LaTeX scoring thresholds
+_SCORE_BASE = 1000
+_SCORE_BRACE_PENALTY = 300
+_SCORE_ARRAY_PENALTY = 450
+_SCORE_LONG_PENALTY = 400
+_SCORE_VERY_LONG_PENALTY = 1000
+_SCORE_HAT_LIMIT = 6
+_SCORE_HAT_PENALTY = 300
+_SCORE_FRAC_BONUS = 80
+_SCORE_SQRT_BONUS = 60
+_SUSPICIOUS_LENGTH = 260
+_SUSPICIOUS_HAT_LIMIT = 8
 
 
 def _brace_delta(latex: str) -> int:
@@ -23,22 +37,22 @@ def _brace_delta(latex: str) -> int:
 
 def _latex_score(latex: str) -> int:
     text = latex.strip()
-    score = 1000
+    score = _SCORE_BASE
     length = len(text)
     score -= length
-    score -= abs(_brace_delta(text)) * 300
+    score -= abs(_brace_delta(text)) * _SCORE_BRACE_PENALTY
     if "\\begin{array}" in text or "\\begin{matrix}" in text:
-        score -= 450
-    if length > 260:
-        score -= 400
-    if length > 600:
-        score -= 1000
-    if text.count("\\hat") + text.count("\\tilde") > 6:
-        score -= 300
+        score -= _SCORE_ARRAY_PENALTY
+    if length > _SUSPICIOUS_LENGTH:
+        score -= _SCORE_LONG_PENALTY
+    if length > _SCORE_VERY_LONG_PENALTY:
+        score -= _SCORE_VERY_LONG_PENALTY
+    if text.count("\\hat") + text.count("\\tilde") > _SCORE_HAT_LIMIT:
+        score -= _SCORE_HAT_PENALTY
     if "\\frac" in text:
-        score += 80
+        score += _SCORE_FRAC_BONUS
     if "\\sqrt" in text:
-        score += 60
+        score += _SCORE_SQRT_BONUS
     return score
 
 
@@ -47,10 +61,10 @@ def _is_suspicious_latex(latex: str) -> bool:
     return (
         not text
         or abs(_brace_delta(text)) > 0
-        or len(text) > 260
+        or len(text) > _SUSPICIOUS_LENGTH
         or "\\begin{array}" in text
         or "\\begin{matrix}" in text
-        or text.count("\\hat") + text.count("\\tilde") > 8
+        or text.count("\\hat") + text.count("\\tilde") > _SUSPICIOUS_HAT_LIMIT
     )
 
 
@@ -152,7 +166,7 @@ async def _recognize_with_model(
     cleaned_latex = post_processor.clean(prediction.latex)
 
     raw_session = request.headers.get("X-Session-ID", "default")
-    session_id = raw_session[:128] if re.match(r'^[a-zA-Z0-9_-]+$', raw_session) else "default"
+    session_id = raw_session[:128] if _SESSION_ID_RE.match(raw_session) else "default"
     try:
         thumbnail = await loop.run_in_executor(None, make_thumbnail_data_url, file_bytes, (320, 180), original_image)
         async with AsyncSessionLocal() as session:

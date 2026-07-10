@@ -27,3 +27,12 @@ body { margin: 0; font-family: "Times New Roman", Times, serif; }
 .animate-slide-in {
   animation: slide-in 0.25s ease-out;
 }
+
+.mathfield-editor {
+  width: 100%;
+  min-height: 240px;
+  font-size: 1.25em;
+  padding: 8px;
+  background-color: inherit;
+  color: inherit;
+}
