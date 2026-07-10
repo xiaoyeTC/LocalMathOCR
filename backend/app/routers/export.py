@@ -93,11 +93,17 @@ def _convert_with_pandoc(latex: str, target_format: str) -> tuple[bytes, str, st
 
 def _convert_to_mathml(latex: str) -> str:
     import subprocess
+    import shutil
 
     latex = _sanitize_latex_for_compile(latex)
     settings = get_settings()
+
+    pandoc_resolved = shutil.which(settings.pandoc_path)
+    if not pandoc_resolved:
+        raise RuntimeError(f"pandoc 未安装或路径无效: {settings.pandoc_path}")
+
     result = subprocess.run(
-        [settings.pandoc_path, "-f", "latex", "-t", "mathml", "--wrap=none"],
+        [pandoc_resolved, "-f", "latex", "-t", "mathml", "--wrap=none"],
         input=latex.encode("utf-8"),
         capture_output=True,
         timeout=10,
