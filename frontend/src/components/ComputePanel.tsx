@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import katex from 'katex';
+import DOMPurify from 'dompurify';
 import { computeFormula, type ComputeResult } from '../services/api';
 
 type Props = {
@@ -99,7 +100,7 @@ export function ComputePanel({ latex, onInsert, onToast }: Props) {
             </div>
             <div
               className="overflow-x-auto text-lg"
-              dangerouslySetInnerHTML={{ __html: resultHtml }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(resultHtml, { ADD_TAGS: ['math', 'semantics', 'annotation'] }) }}
             />
             <div className="mt-3 flex gap-2">
               <button

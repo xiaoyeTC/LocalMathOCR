@@ -22,10 +22,16 @@ async def pdf_info(file: UploadFile = File(...)):
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="仅支持 PDF 文件")
 
-    file_bytes = await file.read()
-    max_bytes = settings.max_upload_mb * 1024 * 1024
-    if len(file_bytes) > max_bytes * 5:
-        raise HTTPException(status_code=413, detail=f"PDF 文件过大（最大 {settings.max_upload_mb * 5}MB）")
+    settings = get_settings()
+    chunks = []
+    total = 0
+    max_bytes = settings.max_upload_mb * 1024 * 1024 * 5
+    while chunk := await file.read(8192):
+        total += len(chunk)
+        if total > max_bytes:
+            raise HTTPException(status_code=413, detail=f"PDF 文件过大（最大 {settings.max_upload_mb * 5}MB）")
+        chunks.append(chunk)
+    file_bytes = b"".join(chunks)
 
     loop = asyncio.get_running_loop()
 

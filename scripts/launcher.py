@@ -176,7 +176,7 @@ def main() -> int:
         print()
         print("[START] Backend: http://127.0.0.1:8000")
         backend = _launch(
-            [py, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"],
+            [py, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"],
             BACKEND_DIR, "backend",
         )
         print(f"        PID: {backend.pid}")
@@ -184,7 +184,7 @@ def main() -> int:
         # Launch frontend
         print("[START] Frontend: http://127.0.0.1:5173")
         frontend = _launch(
-            [npm, "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"],
+            [npm, "run", "dev", "--", "--host", "127.0.0.1", "--port", "5173"],
             FRONTEND_DIR, "frontend",
         )
         print(f"        PID: {frontend.pid}")

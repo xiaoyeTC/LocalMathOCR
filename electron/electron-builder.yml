@@ -9,8 +9,6 @@ files:
 extraResources:
   - from: backend/dist/main.exe
     to: backend/main.exe
-  - from: backend/.env
-    to: backend/.env
 win:
   target: nsis
   icon: assets/icon.ico

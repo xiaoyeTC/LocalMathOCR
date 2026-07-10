@@ -8,7 +8,12 @@ import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import 'mathlive';
 import 'mathlive/fonts.css';
+import DOMPurify from 'dompurify';
 import { exportFormulaText, exportFormulaFile } from '../services/api';
+
+function sanitizeKatexHtml(html: string): string {
+  return DOMPurify.sanitize(html, { ADD_TAGS: ['math', 'semantics', 'annotation'] });
+}
 
 type Props = {
   value: string;
@@ -569,7 +574,7 @@ export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
                   <button onClick={handleAutoFix} className="mt-2 rounded-lg bg-amber-200 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-300">一键修复</button>
                 </div>
               ) : preview.html ? (
-                <div ref={previewRef} className="formula-preview-font inline-block text-2xl" style={previewFontStyle} dangerouslySetInnerHTML={{ __html: preview.html }} />
+                <div ref={previewRef} className="formula-preview-font inline-block text-2xl" style={previewFontStyle} dangerouslySetInnerHTML={{ __html: sanitizeKatexHtml(preview.html) }} />
               ) : (
                 <div className="text-sm text-slate-400">请输入公式</div>
               )}

@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import secrets
 import time
 from pathlib import Path
 
@@ -12,10 +13,11 @@ router = APIRouter(prefix="/api", tags=["settings"])
 
 _admin_tokens: dict[str, float] = {}
 TOKEN_TTL = 3600
+_env_write_lock = __import__('threading').Lock()
 
 
 def _make_token(password: str, session_id: str) -> str:
-    return hmac.HMAC(password.encode(), session_id.encode(), hashlib.sha256).hexdigest()
+    return secrets.token_urlsafe(32)
 
 
 def _purge_expired_tokens() -> None:
@@ -120,34 +122,35 @@ async def update_settings(request: Request):
 
     _purge_expired_tokens()
 
-    env_path = _ENV_FILE
-    lines: list[str] = []
-    if env_path.exists():
-        lines = env_path.read_text(encoding="utf-8").splitlines()
+    with _env_write_lock:
+        env_path = _ENV_FILE
+        lines: list[str] = []
+        if env_path.exists():
+            lines = env_path.read_text(encoding="utf-8").splitlines()
 
-    updated_keys: set[str] = set()
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if stripped.startswith("#") or "=" not in stripped:
-            continue
-        key = stripped.split("=", 1)[0].strip()
-        if key in updates:
-            val = updates[key]
-            if isinstance(val, bool):
-                lines[i] = f"{key}={'true' if val else 'false'}"
-            else:
-                lines[i] = f"{key}={_sanitize_env_value(str(val))}"
-            updated_keys.add(key)
+        updated_keys: set[str] = set()
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped.startswith("#") or "=" not in stripped:
+                continue
+            key = stripped.split("=", 1)[0].strip()
+            if key in updates:
+                val = updates[key]
+                if isinstance(val, bool):
+                    lines[i] = f"{key}={'true' if val else 'false'}"
+                else:
+                    lines[i] = f"{key}={_sanitize_env_value(str(val))}"
+                updated_keys.add(key)
 
-    for key, val in updates.items():
-        if key not in updated_keys:
-            if isinstance(val, bool):
-                lines.append(f"{key}={'true' if val else 'false'}")
-            else:
-                lines.append(f"{key}={_sanitize_env_value(str(val))}")
+        for key, val in updates.items():
+            if key not in updated_keys:
+                if isinstance(val, bool):
+                    lines.append(f"{key}={'true' if val else 'false'}")
+                else:
+                    lines.append(f"{key}={_sanitize_env_value(str(val))}")
 
-    env_path.parent.mkdir(parents=True, exist_ok=True)
-    env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    clear_settings_cache()
+        env_path.parent.mkdir(parents=True, exist_ok=True)
+        env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        clear_settings_cache()
 
     return success({"updated": list(updates.keys())})

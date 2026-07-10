@@ -102,6 +102,8 @@ export default function App() {
     refreshHistory();
   }, [refreshModels, refreshHistory]);
 
+  const sseReconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     function connect() {
@@ -118,13 +120,14 @@ export default function App() {
         if (cancelled) return;
         source.close();
         setModelStatus({ status: 'unavailable', device: 'cpu', message: '模型状态流已断开，3秒后重连', progress: 0 });
-        setTimeout(connect, 3000);
+        sseReconnectRef.current = setTimeout(connect, 3000);
       };
       return source;
     }
     const source = connect();
     return () => {
       cancelled = true;
+      if (sseReconnectRef.current) clearTimeout(sseReconnectRef.current);
       source?.close();
     };
   }, [applyModelPayload, setModelStatus, showToast]);
@@ -171,9 +174,10 @@ export default function App() {
       showToast('当前模型未启用，请选择可用模型');
       return;
     }
+    if (cropImageSrc) URL.revokeObjectURL(cropImageSrc);
     const url = URL.createObjectURL(file);
     setCropImageSrc(url);
-  }, [modelStatus.status, showToast]);
+  }, [loading, modelStatus.status, cropImageSrc, showToast]);
 
   const handleCroppedFile = useCallback(async (file: File) => {
     if (cropImageSrc) URL.revokeObjectURL(cropImageSrc);

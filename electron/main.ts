@@ -12,7 +12,9 @@ const FRONTEND_PORT = 5173;
 
 function getBackendPath(): string {
   if (isDev) {
-    return path.join(__dirname, '..', 'backend', '.venv', 'Scripts', 'python.exe');
+    const venvBin = process.platform === 'win32' ? 'Scripts' : 'bin';
+    const venvPy = process.platform === 'win32' ? 'python.exe' : 'python3';
+    return path.join(__dirname, '..', 'backend', '.venv', venvBin, venvPy);
   }
   return path.join(process.resourcesPath, 'backend', 'main.exe');
 }
@@ -42,8 +44,10 @@ function startBackend(): Promise<void> {
     backendProcess = spawn(backendPath, args, {
       cwd,
       env: {
-        ...process.env,
+        PATH: process.env.PATH,
+        HOME: process.env.HOME || process.env.USERPROFILE,
         APP_DEVICE: process.env.APP_DEVICE || 'auto',
+        PYTHONIOENCODING: 'utf-8',
       },
       stdio: isDev ? 'pipe' : 'ignore',
     });
@@ -132,7 +136,9 @@ function createWindow(): void {
   }
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    if (url.startsWith('https:') || url.startsWith('http:')) {
+      shell.openExternal(url);
+    }
     return { action: 'deny' };
   });
 

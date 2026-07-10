@@ -87,6 +87,7 @@ def _convert_with_pandoc(latex: str, target_format: str) -> tuple[bytes, str, st
 def _convert_to_mathml(latex: str) -> str:
     import subprocess
 
+    latex = _sanitize_latex_for_compile(latex)
     settings = get_settings()
     result = subprocess.run(
         [settings.pandoc_path, "-f", "latex", "-t", "mathml", "--wrap=none"],
