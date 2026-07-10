@@ -259,8 +259,6 @@ class Pix2TextEngine(BaseOCREngine):
             if "out of memory" in str(exc).lower() or "cuda" in str(exc).lower():
                 self._handle_oom(exc)
             raise
-        finally:
-            gc.collect()
 
 
 class LatexOCREngine(BaseOCREngine):
@@ -405,7 +403,6 @@ class LatexOCREngine(BaseOCREngine):
                 self._handle_oom(exc)
             raise
         finally:
-            gc.collect()
             self._clear_cuda_cache()
 
 
@@ -525,5 +522,4 @@ class UniEquationEngine(BaseOCREngine):
             raise
         finally:
             del inputs, output_ids
-            gc.collect()
             self._clear_cuda_cache()

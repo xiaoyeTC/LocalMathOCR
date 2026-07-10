@@ -71,8 +71,9 @@ def _convert_with_pandoc(latex: str, target_format: str) -> tuple[bytes, str, st
 
         result = subprocess.run(cmd, capture_output=True, timeout=60)
         if result.returncode != 0:
-            stderr = result.stderr.decode("utf-8", errors="replace")
-            raise RuntimeError(f"Pandoc failed: {stderr}")
+            import logging
+            logging.getLogger(__name__).warning("Pandoc failed: %s", result.stderr.decode("utf-8", errors="replace"))
+            raise RuntimeError("文件转换失败")
 
         content = out_path.read_bytes()
 
