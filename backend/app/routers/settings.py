@@ -31,12 +31,10 @@ def _verify_admin(request: Request) -> bool:
     if not settings.admin_password:
         return False
     token = request.headers.get("X-Admin-Token", "")
-    session_id = request.headers.get("X-Session-ID", "default")
-    expected = _make_token(settings.admin_password, session_id)
-    if not hmac.compare_digest(token, expected):
+    if not token or token not in _admin_tokens:
         return False
-    stored_time = _admin_tokens.get(token)
-    if stored_time and time.time() - stored_time > TOKEN_TTL:
+    stored_time = _admin_tokens[token]
+    if time.time() - stored_time > TOKEN_TTL:
         del _admin_tokens[token]
         return False
     return True
@@ -61,7 +59,7 @@ async def admin_login(request: Request):
 
     if not settings.admin_password:
         return success({"token": "", "message": "管理员密码未设置，所有设置可自由修改"})
-    if password != settings.admin_password:
+    if not hmac.compare_digest(password.encode(), settings.admin_password.encode()):
         raise HTTPException(status_code=401, detail="密码错误")
 
     _purge_expired_tokens()

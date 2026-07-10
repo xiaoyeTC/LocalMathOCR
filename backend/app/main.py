@@ -5,7 +5,9 @@ from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import get_settings
+from app.routers.compute import router as compute_router
 from app.routers.export import router as export_router
+from app.routers.pdf import router as pdf_router
 from app.routers.history import router as history_router
 from app.routers.ocr import router as ocr_router
 from app.routers.settings import router as settings_router
@@ -52,7 +54,9 @@ settings = get_settings()
 app = FastAPI(title=settings.app_name, version="1.0.0", lifespan=lifespan)
 app.add_middleware(DynamicCORSMiddleware)
 app.include_router(ocr_router)
+app.include_router(compute_router)
 app.include_router(export_router)
+app.include_router(pdf_router)
 app.include_router(history_router)
 app.include_router(settings_router)
 

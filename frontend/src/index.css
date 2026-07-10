@@ -19,3 +19,11 @@
 
 body { margin: 0; font-family: "Times New Roman", Times, serif; }
 .katex-display { margin: 0; }
+
+@keyframes slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-in {
+  animation: slide-in 0.25s ease-out;
+}

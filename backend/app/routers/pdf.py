@@ -54,6 +54,14 @@ async def render_page(body: dict):
     page = body.get("page", 1)
     dpi = body.get("dpi", get_settings().pdf_dpi)
 
+    if not isinstance(page, int) or page < 1:
+        raise HTTPException(status_code=400, detail="page 必须为正整数")
+    if not isinstance(dpi, (int, float)) or dpi < 1:
+        raise HTTPException(status_code=400, detail="dpi 必须为正数")
+    dpi = int(dpi)
+    if dpi > MAX_DPI:
+        dpi = MAX_DPI
+
     if not pdf_base64:
         raise HTTPException(status_code=400, detail="pdf_base64 不能为空")
 

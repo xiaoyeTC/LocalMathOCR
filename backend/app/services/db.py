@@ -16,6 +16,7 @@ class HistoryRecord(Base):
     __tablename__ = "history_records"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    session_id: Mapped[str] = mapped_column(Text, nullable=False, index=True, default="default")
     latex: Mapped[str] = mapped_column(Text, nullable=False)
     image_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
@@ -34,6 +35,23 @@ AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=As
 async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(_migrate_add_session_id)
+
+
+def _migrate_add_session_id(sync_conn) -> None:
+    try:
+        result = sync_conn.execute(
+            __import__('sqlalchemy').text("PRAGMA table_info(history_records)")
+        )
+        columns = {row[1] for row in result}
+        if 'session_id' not in columns:
+            sync_conn.execute(
+                __import__('sqlalchemy').text(
+                    "ALTER TABLE history_records ADD COLUMN session_id TEXT NOT NULL DEFAULT 'default'"
+                )
+            )
+    except Exception:
+        pass
 
 
 async def get_session() -> AsyncSession:
@@ -41,26 +59,28 @@ async def get_session() -> AsyncSession:
         yield session
 
 
-async def create_history(session: AsyncSession, latex: str, image_base64: str | None) -> HistoryRecord:
-    record = HistoryRecord(latex=latex, image_base64=image_base64)
+async def create_history(session: AsyncSession, latex: str, image_base64: str | None, session_id: str = "default") -> HistoryRecord:
+    record = HistoryRecord(latex=latex, image_base64=image_base64, session_id=session_id)
     session.add(record)
     await session.commit()
     await session.refresh(record)
     return record
 
 
-async def list_history(session: AsyncSession, limit: int = 50) -> list[HistoryRecord]:
-    result = await session.execute(select(HistoryRecord).order_by(HistoryRecord.created_at.desc()).limit(limit))
+async def list_history(session: AsyncSession, session_id: str = "default", limit: int = 50) -> list[HistoryRecord]:
+    result = await session.execute(
+        select(HistoryRecord).where(HistoryRecord.session_id == session_id).order_by(HistoryRecord.created_at.desc()).limit(limit)
+    )
     return list(result.scalars().all())
 
 
-async def clear_history(session: AsyncSession) -> int:
-    result = await session.execute(delete(HistoryRecord))
+async def clear_history(session: AsyncSession, session_id: str = "default") -> int:
+    result = await session.execute(delete(HistoryRecord).where(HistoryRecord.session_id == session_id))
     await session.commit()
     return int(result.rowcount or 0)
 
 
-async def delete_history(session: AsyncSession, record_id: int) -> bool:
-    result = await session.execute(delete(HistoryRecord).where(HistoryRecord.id == record_id))
+async def delete_history(session: AsyncSession, record_id: int, session_id: str = "default") -> bool:
+    result = await session.execute(delete(HistoryRecord).where(HistoryRecord.id == record_id, HistoryRecord.session_id == session_id))
     await session.commit()
     return bool(result.rowcount)

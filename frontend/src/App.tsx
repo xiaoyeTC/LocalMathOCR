@@ -47,10 +47,22 @@ export default function App() {
     document.documentElement.classList.toggle('dark', dark);
   }, [dark]);
 
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const showToast = useCallback((message: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast(message);
-    window.setTimeout(() => setToast(''), 2600);
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast('');
+      toastTimerRef.current = null;
+    }, 2600);
   }, [setToast]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   const applyModelPayload = useCallback((payload: ModelsEventPayload) => {
     setModels(payload.models);
@@ -91,18 +103,30 @@ export default function App() {
   }, [refreshModels, refreshHistory]);
 
   useEffect(() => {
-    const source = createModelEvents();
-    source.addEventListener('models', (event) => {
-      try {
-        applyModelPayload(JSON.parse((event as MessageEvent).data));
-      } catch {
-        showToast('模型状态流解析失败');
-      }
-    });
-    source.onerror = () => {
-      setModelStatus({ status: 'unavailable', device: 'cpu', message: '模型状态流已断开，正在等待重连', progress: 0 });
+    let cancelled = false;
+    function connect() {
+      if (cancelled) return;
+      const source = createModelEvents();
+      source.addEventListener('models', (event) => {
+        try {
+          applyModelPayload(JSON.parse((event as MessageEvent).data));
+        } catch {
+          showToast('模型状态流解析失败');
+        }
+      });
+      source.onerror = () => {
+        if (cancelled) return;
+        source.close();
+        setModelStatus({ status: 'unavailable', device: 'cpu', message: '模型状态流已断开，3秒后重连', progress: 0 });
+        setTimeout(connect, 3000);
+      };
+      return source;
+    }
+    const source = connect();
+    return () => {
+      cancelled = true;
+      source?.close();
     };
-    return () => source.close();
   }, [applyModelPayload, setModelStatus, showToast]);
 
   const switchingRef = useRef(false);
@@ -152,6 +176,7 @@ export default function App() {
   }, [modelStatus.status, showToast]);
 
   const handleCroppedFile = useCallback(async (file: File) => {
+    if (cropImageSrc) URL.revokeObjectURL(cropImageSrc);
     setCropImageSrc(null);
     setLoading(true);
     const targetModel = models.find((m) => m.id === selectedModelId);

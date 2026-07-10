@@ -104,9 +104,15 @@ async def _recognize_with_model(
     settings = get_settings()
     if file.content_type not in {"image/jpeg", "image/png", "image/webp"}:
         raise HTTPException(status_code=400, detail="Only JPG, PNG and WebP images are supported")
-    file_bytes = await file.read()
-    if len(file_bytes) > settings.max_upload_mb * 1024 * 1024:
-        raise HTTPException(status_code=413, detail=f"Image must be smaller than {settings.max_upload_mb}MB")
+    chunks = []
+    total = 0
+    max_bytes = settings.max_upload_mb * 1024 * 1024
+    while chunk := await file.read(8192):
+        total += len(chunk)
+        if total > max_bytes:
+            raise HTTPException(status_code=413, detail=f"文件不能超过 {settings.max_upload_mb}MB")
+        chunks.append(chunk)
+    file_bytes = b"".join(chunks)
 
     try:
         validate_image_magic(file_bytes)

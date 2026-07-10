@@ -330,6 +330,7 @@ export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
     const mf = mfRef.current;
     if (!mf) return;
     let disposed = false;
+    let attachedHandler: (() => void) | null = null;
     function attach() {
       if (disposed) return;
       const el = mf as (HTMLElement & { setValue?: (v: string) => void; value?: string }) | null;
@@ -337,11 +338,19 @@ export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
         requestAnimationFrame(attach);
         return;
       }
-      el.addEventListener('input', () => handleChange(el.value ?? ''));
+      if (attachedHandler) return;
+      attachedHandler = () => handleChange(el.value ?? '');
+      el.addEventListener('input', attachedHandler);
       if (value) el.setValue(value);
     }
     attach();
-    return () => { disposed = true; };
+    return () => {
+      disposed = true;
+      if (attachedHandler) {
+        const el = mf as (HTMLElement & { removeEventListener?: (type: string, handler: EventListener) => void }) | null;
+        el?.removeEventListener?.('input', attachedHandler);
+      }
+    };
   }, [mode]);
 
   useEffect(() => {

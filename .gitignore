@@ -26,6 +26,11 @@ node_modules/
 .DS_Store
 Thumbs.db
 
+# Env files
+.env
+backend/.env
+frontend/.env
+
 # IDE
 .vscode/
 .idea/

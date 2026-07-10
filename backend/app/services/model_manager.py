@@ -231,7 +231,7 @@ class ModelManager:
             return
         message = json.dumps(self.event_payload(), ensure_ascii=False)
         stale: list[asyncio.Queue[str]] = []
-        for queue in self._subscribers:
+        for queue in list(self._subscribers):
             try:
                 if queue.full():
                     queue.get_nowait()
@@ -250,7 +250,10 @@ class ModelManager:
             runtime.progress = max(0, min(100, progress))
             runtime.message = message
             if self._loop and self._loop.is_running():
-                self._loop.call_soon_threadsafe(lambda: asyncio.create_task(self.broadcast()))
+                try:
+                    self._loop.call_soon_threadsafe(lambda: asyncio.ensure_future(self.broadcast()))
+                except RuntimeError:
+                    pass
         return callback
 
     def _get_runtime(self, model_id: str) -> ModelRuntime:

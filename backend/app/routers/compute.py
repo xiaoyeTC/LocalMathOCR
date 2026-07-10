@@ -72,6 +72,11 @@ def _latex_to_sympy_str(latex: str) -> str:
 
 def _parse_latex_expr(latex: str):
     import sympy
+    from sympy.parsing.sympy_parser import (
+        parse_expr,
+        standard_transformations,
+        implicit_multiplication_application,
+    )
 
     expr_str = _latex_to_sympy_str(latex)
     if not expr_str:
@@ -99,13 +104,18 @@ def _parse_latex_expr(latex: str):
         if token not in local_dict and not hasattr(sympy, token):
             local_dict[token] = sympy.Symbol(token)
 
+    transformations = standard_transformations + (implicit_multiplication_application,)
+
     try:
         if "=" in expr_str and "==" not in expr_str:
             parts = expr_str.split("=", 1)
-            lhs = sympy.sympify(parts[0].strip(), locals=local_dict)
-            rhs = sympy.sympify(parts[1].strip(), locals=local_dict)
+            lhs = parse_expr(parts[0].strip(), local_dict=local_dict,
+                             transformations=transformations, evaluate=False)
+            rhs = parse_expr(parts[1].strip(), local_dict=local_dict,
+                             transformations=transformations, evaluate=False)
             return sympy.Eq(lhs, rhs)
-        expr = sympy.sympify(expr_str, locals=local_dict)
+        expr = parse_expr(expr_str, local_dict=local_dict,
+                          transformations=transformations, evaluate=False)
         return expr
     except Exception as exc:
         raise ValueError(f"无法解析表达式: {expr_str} ({exc})") from exc
