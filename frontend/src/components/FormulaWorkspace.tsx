@@ -265,9 +265,9 @@ function autoFixLatex(latex: string): string {
   return out;
 }
 
-function createKatexLinter(latex: string) {
+function createKatexLinter(valueRef: React.MutableRefObject<string>) {
   return linter(() => {
-    const v = latex.trim();
+    const v = valueRef.current.trim();
     if (!v) return [];
     try {
       katex.renderToString(v, { throwOnError: true, displayMode: true, strict: 'ignore' });
@@ -313,7 +313,9 @@ export function FormulaWorkspace({ value, onChange, onCopy, onToast }: Props) {
     [onChange],
   );
 
-  const katexLinter = useMemo(() => createKatexLinter(value), [value]);
+  const latexValueRef = useRef(value);
+  latexValueRef.current = value;
+  const katexLinter = useMemo(() => createKatexLinter(latexValueRef), []);
 
   const handleAutoFix = useCallback(() => {
     const fixed = autoFixLatex(value);

@@ -335,6 +335,11 @@ class FormulaPreprocessor:
         scale = min_h / max(h, 1)
         new_w = math.ceil(w * scale)
         new_h = math.ceil(h * scale)
+        max_dim = MAX_PROCESS_LONG_EDGE
+        if max(new_w, new_h) > max_dim:
+            ratio = max_dim / max(new_w, new_h)
+            new_w = math.ceil(new_w * ratio)
+            new_h = math.ceil(new_h * ratio)
 
         return cv2.resize(
             gray,

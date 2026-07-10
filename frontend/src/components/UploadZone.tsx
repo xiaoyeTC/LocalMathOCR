@@ -118,17 +118,22 @@ function PdfExtractor({ onInsert, onToast, onRecognized }: { onInsert: (l: strin
     disabled: loading,
   });
 
+  const renderGenRef = useRef(0);
+
   const renderPage = useCallback(async (page: number) => {
     if (!pdfBase64) return;
+    const gen = ++renderGenRef.current;
     setRendering(true);
     try {
       const data = await renderPdfPage(pdfBase64, page, 200);
+      if (gen !== renderGenRef.current) return;
       setPageImage(data.image_base64);
       setPageNaturalSize({ w: data.width, h: data.height });
     } catch (err) {
+      if (gen !== renderGenRef.current) return;
       onToast(err instanceof Error ? err.message : '渲染失败');
     } finally {
-      setRendering(false);
+      if (gen === renderGenRef.current) setRendering(false);
     }
   }, [pdfBase64, onToast]);
 

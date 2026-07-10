@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 type SettingsData = Record<string, unknown>;
 
@@ -21,11 +21,15 @@ export function SettingsPanel({ onClose }: Props) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'error' | 'success'>('error');
+  const msgTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (msgTimerRef.current) clearTimeout(msgTimerRef.current); }, []);
 
   const showMessage = (text: string, type: 'error' | 'success' = 'error') => {
+    if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
     setMessage(text);
     setMessageType(type);
-    setTimeout(() => setMessage(''), 3000);
+    msgTimerRef.current = setTimeout(() => setMessage(''), 3000);
   };
 
   const fetchSettings = useCallback(async (token?: string) => {

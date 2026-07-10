@@ -150,13 +150,16 @@ async def _recognize_with_model(
 
     cleaned_latex = post_processor.clean(prediction.latex)
 
-    session_id = request.headers.get("X-Session-ID", "default")
+    import re as _re
+    raw_session = request.headers.get("X-Session-ID", "default")
+    session_id = raw_session[:128] if _re.match(r'^[a-zA-Z0-9_-]+$', raw_session) else "default"
     try:
         thumbnail = await loop.run_in_executor(None, make_thumbnail_data_url, file_bytes, (320, 180), original_image)
         async with AsyncSessionLocal() as session:
             await create_history(session, cleaned_latex, thumbnail, session_id=session_id)
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("Failed to save history: %s", exc, exc_info=True)
 
     return success({
         "latex": cleaned_latex,

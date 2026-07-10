@@ -46,6 +46,10 @@ class ModelManager:
         self._loop: asyncio.AbstractEventLoop | None = None
         self._register_defaults()
         if self.default_model_id not in self.enabled_model_ids:
+            import logging
+            logging.getLogger(__name__).warning(
+                "默认模型 '%s' 未启用，回退到 'pix2text'", self.default_model_id
+            )
             self.default_model_id = "pix2text"
 
     @property

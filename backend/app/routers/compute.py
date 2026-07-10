@@ -215,8 +215,8 @@ async def compute(body: dict):
         )
     except asyncio.TimeoutError:
         raise HTTPException(status_code=408, detail=f"计算超时（>{COMPUTE_TIMEOUT_SEC}秒），请简化表达式后重试")
-    except Exception as exc:
-        raise HTTPException(status_code=422, detail=f"计算失败: {exc}") from exc
+    except Exception:
+        raise HTTPException(status_code=422, detail="计算失败，请检查表达式后重试")
 
     return success({
         "result_latex": result_latex,

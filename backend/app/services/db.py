@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy import DateTime, Integer, Text, delete, select
@@ -19,7 +19,7 @@ class HistoryRecord(Base):
     session_id: Mapped[str] = mapped_column(Text, nullable=False, index=True, default="default")
     latex: Mapped[str] = mapped_column(Text, nullable=False)
     image_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
 
 settings = get_settings()
@@ -50,8 +50,10 @@ def _migrate_add_session_id(sync_conn) -> None:
                     "ALTER TABLE history_records ADD COLUMN session_id TEXT NOT NULL DEFAULT 'default'"
                 )
             )
-    except Exception:
-        pass
+    except Exception as exc:
+        if "duplicate column" not in str(exc).lower():
+            import logging
+            logging.getLogger(__name__).warning("Migration failed: %s", exc)
 
 
 async def get_session() -> AsyncSession:

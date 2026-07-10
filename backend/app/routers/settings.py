@@ -50,6 +50,11 @@ ADMIN_SETTINGS = {
 }
 
 
+def _sanitize_env_value(val: str) -> str:
+    """移除换行符和空字符，防止 .env 换行注入。"""
+    return val.replace("\n", "").replace("\r", "").replace("\0", "")
+
+
 @router.post("/auth/admin")
 async def admin_login(request: Request):
     settings = get_settings()
@@ -131,7 +136,7 @@ async def update_settings(request: Request):
             if isinstance(val, bool):
                 lines[i] = f"{key}={'true' if val else 'false'}"
             else:
-                lines[i] = f"{key}={val}"
+                lines[i] = f"{key}={_sanitize_env_value(str(val))}"
             updated_keys.add(key)
 
     for key, val in updates.items():
@@ -139,7 +144,7 @@ async def update_settings(request: Request):
             if isinstance(val, bool):
                 lines.append(f"{key}={'true' if val else 'false'}")
             else:
-                lines.append(f"{key}={val}")
+                lines.append(f"{key}={_sanitize_env_value(str(val))}")
 
     env_path.parent.mkdir(parents=True, exist_ok=True)
     env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
