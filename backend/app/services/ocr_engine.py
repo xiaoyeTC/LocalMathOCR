@@ -141,17 +141,15 @@ class BaseOCREngine(ABC):
 
 
 HF_MIRROR = "https://hf-mirror.com"
+_env_lock = __import__('threading').Lock()
 
 
 def _hf_download_with_mirror(repo_id: str, local_dir: str, progress_cb: ProgressCallback | None = None) -> None:
     from requests.exceptions import ConnectionError as ReqConnectionError
 
-    original = os.environ.get("HF_ENDPOINT")
+    with _env_lock:
+        original = os.environ.get("HF_ENDPOINT")
     try:
-        if original:
-            os.environ["HF_ENDPOINT"] = original
-        elif "HF_ENDPOINT" in os.environ:
-            del os.environ["HF_ENDPOINT"]
         if progress_cb:
             progress_cb(10, f"trying official HuggingFace for {repo_id}")
         from huggingface_hub import snapshot_download
@@ -159,14 +157,16 @@ def _hf_download_with_mirror(repo_id: str, local_dir: str, progress_cb: Progress
     except (ReqConnectionError, OSError):
         if progress_cb:
             progress_cb(20, f"official failed, using mirror {HF_MIRROR}")
-        os.environ["HF_ENDPOINT"] = HF_MIRROR
+        with _env_lock:
+            os.environ["HF_ENDPOINT"] = HF_MIRROR
         from huggingface_hub import snapshot_download
         snapshot_download(repo_id=repo_id, local_dir=local_dir, local_dir_use_symlinks=False)
     finally:
-        if original is not None:
-            os.environ["HF_ENDPOINT"] = original
-        elif "HF_ENDPOINT" in os.environ:
-            del os.environ["HF_ENDPOINT"]
+        with _env_lock:
+            if original is not None:
+                os.environ["HF_ENDPOINT"] = original
+            elif "HF_ENDPOINT" in os.environ:
+                del os.environ["HF_ENDPOINT"]
 
 
 class Pix2TextEngine(BaseOCREngine):

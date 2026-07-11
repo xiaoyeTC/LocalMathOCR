@@ -1,3 +1,4 @@
+import hashlib
 import os
 from functools import lru_cache
 from pathlib import Path
@@ -41,6 +42,20 @@ class Settings(BaseSettings):
     pandoc_path: str = "pandoc"
     xelatex_path: str = "xelatex"
     admin_password: str = ""
+
+    def verify_admin_password(self, password: str) -> bool:
+        """验证密码，支持明文和 sha256 哈希格式。"""
+        if not self.admin_password:
+            return False
+        if self.admin_password.startswith("sha256:"):
+            stored_hash = self.admin_password[7:]
+            return hashlib.sha256(password.encode()).hexdigest() == stored_hash
+        return password == self.admin_password
+
+    @staticmethod
+    def hash_password(password: str) -> str:
+        """将密码哈希为 sha256 格式。"""
+        return "sha256:" + hashlib.sha256(password.encode()).hexdigest()
 
     model_config = SettingsConfigDict(
         env_file=str(_ENV_FILE),

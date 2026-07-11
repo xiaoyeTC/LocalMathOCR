@@ -153,45 +153,51 @@ class ModelManager:
 
         async with self._switch_lock:
             async with self._predict_lock:
-                if self.active_model_id == selected_id and runtime.engine and runtime.engine.status == "ready":
-                    runtime.active = True
-                    runtime.state = "ready"
-                    runtime.progress = 100
-                    await self.broadcast()
-                    return self.status_payload()
+                return await self._activate_unlocked(selected_id)
 
-                old_model_id = self.active_model_id
-                if runtime.engine is None:
-                    runtime.engine = runtime.factory()
+    async def _activate_unlocked(self, selected_id: str) -> dict:
+        """内部激活方法，假设已持有 _switch_lock 和 _predict_lock。"""
+        runtime = self._get_runtime(selected_id)
 
-                await self.prepare(selected_id)
-                runtime.state = "downloading"
-                runtime.message = "正在加载模型到显存"
-                runtime.progress = 95
-                await self.broadcast()
-                await runtime.engine.load_async()
-                if runtime.engine.status != "ready":
-                    self._set_unavailable(runtime, runtime.engine.message)
-                    raise RuntimeError(runtime.engine.message)
+        if self.active_model_id == selected_id and runtime.engine and runtime.engine.status == "ready":
+            runtime.active = True
+            runtime.state = "ready"
+            runtime.progress = 100
+            await self.broadcast()
+            return self.status_payload()
 
-                self.active_model_id = selected_id
-                for item in self._runtimes.values():
-                    item.active = item.metadata.id == selected_id
-                runtime.state = "ready"
-                runtime.device = runtime.engine.device
-                runtime.message = runtime.engine.message
+        old_model_id = self.active_model_id
+        if runtime.engine is None:
+            runtime.engine = runtime.factory()
 
-                if old_model_id and old_model_id != selected_id:
-                    self._unload_engine(old_model_id)
-                self._release_memory()
-                await self.broadcast()
-                return self.status_payload()
+        await self.prepare(selected_id)
+        runtime.state = "downloading"
+        runtime.message = "正在加载模型到显存"
+        runtime.progress = 95
+        await self.broadcast()
+        await runtime.engine.load_async()
+        if runtime.engine.status != "ready":
+            self._set_unavailable(runtime, runtime.engine.message)
+            raise RuntimeError(runtime.engine.message)
+
+        self.active_model_id = selected_id
+        for item in self._runtimes.values():
+            item.active = item.metadata.id == selected_id
+        runtime.state = "ready"
+        runtime.device = runtime.engine.device
+        runtime.message = runtime.engine.message
+
+        if old_model_id and old_model_id != selected_id:
+            self._unload_engine(old_model_id)
+        self._release_memory()
+        await self.broadcast()
+        return self.status_payload()
 
     async def predict(self, model_id: str | None, predict_fn):
         selected_id = model_id or self.active_model_id or self.default_model_id
-        if selected_id != self.active_model_id:
-            await self.activate(selected_id)
         async with self._predict_lock:
+            if selected_id != self.active_model_id:
+                await self._activate_unlocked(selected_id)
             runtime = self._get_runtime(selected_id)
             if runtime.engine is None or runtime.engine.status != "ready":
                 raise RuntimeError(f"Model '{selected_id}' is not ready")

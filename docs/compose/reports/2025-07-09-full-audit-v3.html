@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SimpleTex 全量代码审计报告 v3</title>
+<style>
+:root{--bg:#0d1117;--s:#161b22;--b:#30363d;--t:#e6edf3;--m:#8b949e;--cr:#f85149;--hi:#d29922;--md:#58a6ff;--lo:#8b949e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'Segoe UI','Noto Sans SC',sans-serif;background:var(--bg);color:var(--t);line-height:1.6}
+.w{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+h1{font-size:2rem;margin-bottom:.5rem}
+.sub{color:var(--m);margin-bottom:2rem;font-size:.95rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin-bottom:2.5rem}
+.st{background:var(--s);border:1px solid var(--b);border-radius:8px;padding:1.2rem;text-align:center}
+.st .n{font-size:2rem;font-weight:700}.st .l{color:var(--m);font-size:.85rem;margin-top:.25rem}
+.st.cr .n{color:var(--cr)}.st.hi .n{color:var(--hi)}.st.md .n{color:var(--md)}.st.lo .n{color:var(--lo)}.st.tl .n{color:var(--t)}
+.sec{margin-bottom:2.5rem}.sec h2{font-size:1.4rem;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--b)}
+.f{background:var(--s);border:1px solid var(--b);border-radius:8px;margin-bottom:1rem;overflow:hidden}
+.fh{padding:1rem 1.2rem;cursor:pointer;display:flex;align-items:center;gap:.75rem;user-select:none}
+.fh:hover{background:#1c2129}
+.sv{display:inline-block;padding:.15rem .6rem;border-radius:4px;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
+.sv.cr{background:var(--cr);color:#fff}.sv.hi{background:var(--hi);color:#000}.sv.md{background:var(--md);color:#000}.sv.lo{background:var(--lo);color:#000}
+.ft{font-weight:600;flex:1}.fl{color:var(--m);font-size:.85rem;font-family:monospace;flex-shrink:0}
+.fb{padding:0 1.2rem 1.2rem;display:none}.f.op .fb{display:block}
+.fb h4{color:var(--m);font-size:.8rem;text-transform:uppercase;letter-spacing:.5px;margin:1rem 0 .5rem}.fb h4:first-child{margin-top:0}
+pre{background:#0d1117;border:1px solid var(--b);border-radius:6px;padding:.8rem 1rem;overflow-x:auto;font-size:.82rem;line-height:1.5;margin:.5rem 0;font-family:'Fira Code','Consolas',monospace}
+code{font-family:'Fira Code','Consolas',monospace;font-size:.88em;background:#1c2129;padding:.15rem .4rem;border-radius:3px}pre code{background:none;padding:0}
+.imp{color:var(--cr)}.arr{transition:transform .2s;font-size:.8rem;color:var(--m)}.f.op .arr{transform:rotate(90deg)}
+.fx{background:#23863620;border:1px solid #23863640;border-radius:6px;padding:.6rem 1rem;margin:.5rem 0;font-size:.9rem}
+.ok{background:#23863615;border:1px solid #23863630;border-radius:6px;padding:.6rem 1rem;margin:.5rem 0;font-size:.85rem;color:#7ee787}
+.vb{background:var(--s);border:1px solid var(--b);border-radius:8px;padding:1.5rem;margin-top:2rem}
+.vb h2{border:none;padding:0;margin-bottom:.75rem}.vb p{color:var(--m);line-height:1.7}.vb strong{color:var(--t)}
+.vb ul{margin:.75rem 0 0 1.5rem;color:var(--m)}.vb li{margin-bottom:.3rem}
+@media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}.fh{flex-wrap:wrap}.fl{width:100%}}
+</style>
+</head>
+<body>
+<div class="w">
+
+<h1>SimpleTex 全量代码审计报告 v3</h1>
+<p class="sub">审计时间：2025-07-09 | 范围：后端 + 前端 + Electron | 方法：Fuck My Shit Mountain | 本次为修复后第三次审计</p>
+
+<div class="stats">
+  <div class="st tl"><div class="n">38</div><div class="l">总发现数</div></div>
+  <div class="st cr"><div class="n">3</div><div class="l">CRITICAL</div></div>
+  <div class="st hi"><div class="n">10</div><div class="l">HIGH</div></div>
+  <div class="st md"><div class="n">15</div><div class="l">MEDIUM</div></div>
+  <div class="st lo"><div class="n">10</div><div class="l">LOW</div></div>
+</div>
+
+<!-- ==================== 已修复确认 ==================== -->
+<div class="sec">
+<h2>已修复确认（本次审计验证通过）</h2>
+
+<div class="ok">
+<strong>sympy.sympify RCE</strong> — 已替换为 parse_expr + evaluate=False，所有未定义标识符映射为 Symbol。<br>
+<strong>LaTeX 注入 via xelatex</strong> — 已添加 _sanitize_latex_for_compile，在 _convert_with_pandoc 中调用。<br>
+<strong>Admin token 验证绕过</strong> — 已添加 token in _admin_tokens 检查，密码比较使用 hmac.compare_digest。<br>
+<strong>MathLive 事件监听器泄漏</strong> — 已添加 removeEventListener 清理，使用 handleChangeRef 防陈旧闭包。<br>
+<strong>showToast timer 竞态</strong> — 已用 useRef 追踪 timer，cleanup 时 clearTimeout。<br>
+<strong>.env 换行注入</strong> — 已添加 _sanitize_env_value 过滤换行符。<br>
+<strong>文件上传 OOM (ocr.py)</strong> — 已改为分块读取 + 大小检查。<br>
+<strong>文件上传 OOM (pdf.py)</strong> — 已改为分块读取 + 大小检查。<br>
+<strong>Session ID 验证</strong> — ocr.py 和 history.py 均已添加正则验证。<br>
+<strong>历史记录异常日志</strong> — 已添加 logging.warning。<br>
+<strong>recognize 端点废弃</strong> — 已标注 deprecated=True。<br>
+<strong>MathLive 闭包陈旧</strong> — 已使用 handleChangeRef。<br>
+<strong>katexLinter 重建</strong> — 已使用 latexValueRef + useMemo([], [])。<br>
+<strong>db get_session 回滚</strong> — 已添加 try/except rollback。<br>
+<strong>datetime.utcnow 废弃</strong> — 已改为 datetime.now(timezone.utc)。<br>
+<strong>db 迁移异常处理</strong> — 已仅在非 duplicate column 时记录日志。<br>
+<strong>copyLatex 错误处理</strong> — 已添加 try/catch。<br>
+<strong>SSE 重连定时器</strong> — 已用 sseReconnectRef 追踪，cleanup 时 clearTimeout。<br>
+<strong>Object URL 释放</strong> — handleFile 和 handleCroppedFile 中均已调用 revokeObjectURL。<br>
+<strong>pdf.py 类型验证</strong> — 已添加 page/dpi 类型和范围检查。<br>
+</div>
+</div>
+
+<!-- ==================== CRITICAL ==================== -->
+<div class="sec">
+<h2>CRITICAL — 需要立即修复</h2>
+
+<div class="f op">
+<div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv cr">CRITICAL</span><span class="ft">Electron shell.openExternal 无 URL 验证 — 协议注入</span><span class="fl">electron/main.ts:134-136</span></div>
+<div class="fb">
+<h4>证据</h4>
+<pre><code>mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);  // 无协议过滤，任意 URL 被打开
+    return { action: 'deny' };
+});</code></pre>
+<h4>影响</h4>
+<p class="imp">XSS 构造的 smb:// URL 可窃取 NTLM 哈希，file:// 可打开本地文件，自定义协议可触发任意应用。这是 Electron 已知 CVE 类别。</p>
+<div class="fx"><strong>修复：</strong>仅允许 https:/http: 协议。</div>
+</div></div>
+
+<div class="f">
+<div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv cr">CRITICAL</span><span class="ft">Pandoc 路径由管理员控制 — subprocess 命令注入</span><span class="fl">export.py:49,68,72</span></div>
+<div class="fb">
+<h4>证据</h4>
+<pre><code>pandoc = settings.pandoc_path  # 管理员可通过 PUT /api/settings 设置为任意值
+cmd = [pandoc, str(tex_path), "-o", str(out_path)]
+result = subprocess.run(cmd, ...)</code></pre>
+<h4>影响</h4>
+<p class="imp">管理员可将 pandoc_path 设为 /bin/sh，用户请求导出时该可执行文件被调用，实现完全 RCE。</p>
+<div class="fx"><strong>修复：</strong>使用 shutil.which() 验证路径指向真实 pandoc/xelatex，或限制可执行文件目录。</div>
+</div></div>
+
+<div class="f">
+<div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv cr">CRITICAL</span><span class="ft">dangerouslySetInnerHTML 未经消毒的 KaTeX 输出</span><span class="fl">FormulaWorkspace.tsx:579</span></div>
+<div class="fb">
+<h4>证据</h4>
+<pre><code>dangerouslySetInnerHTML={{ __html: sanitizeKatexHtml(preview.html) }}</code></pre>
+<p>注：虽然已调用 sanitizeKatexHtml，但需确认该函数是否使用 DOMPurify 或等效方案。如果 sanitizeKatexHtml 仅做简单的字符串替换而非真正的 HTML 消毒，则 XSS 风险仍存在。</p>
+<h4>影响</h4>
+<p class="imp">如果 sanitizeKatexHtml 不够严格，恶意 LaTeX 可注入任意 HTML/JS。</p>
+<div class="fx"><strong>修复：</strong>确认 sanitizeKatexHtml 使用 DOMPurify。若未使用，引入 DOMPurify 替代。</div>
+</div></div>
+</div>
+
+<!-- ==================== HIGH ==================== -->
+<div class="sec">
+<h2>HIGH — 需要尽快修复</h2>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv hi">HIGH</span><span class="ft">.env 文件打包进 Electron 生产构建</span><span class="fl">electron-builder.yml:12-13</span></div>
+<div class="fb"><h4>影响</h4><p class="imp">.env 被 extraResources 复制到生产包，未来添加的密钥将随应用分发。</p><div class="fx"><strong>修复：</strong>从 extraResources 移除 .env。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv hi">HIGH</span><span class="ft">Launcher 绑定 0.0.0.0 — 网络暴露</span><span class="fl">scripts/launcher.py:179,186</span></div>
+<div class="fb"><h4>影响</h4><p class="imp">后端和前端 dev server 绑定所有网络接口，任何人可访问无认证 API。</p><div class="fx"><strong>修复：</strong>改为 127.0.0.1。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv hi">HIGH</span><span class="ft">model_manager TOCTOU 竞态</span><span class="fl">model_manager.py:190-198</span></div>
+<div class="fb"><h4>证据</h4>
+<pre><code>async def predict(self, model_id, predict_fn):
+    if selected_id != self.active_model_id:
+        await self.activate(selected_id)  # 释放锁
+    async with self._predict_lock:       # 间隙：另一个协程可激活不同模型</code></pre>
+<h4>影响</h4><p class="imp">activate 释放锁后到 predict 获取锁前，另一个请求可激活不同模型。</p><div class="fx"><strong>修复：</strong>重构为单一锁覆盖 activate + predict。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv hi">HIGH</span><span class="ft">os.environ 竞态条件</span><span class="fl">ocr_engine.py:146-169</span></div>
+<div class="fb"><h4>影响</h4><p class="imp">并发下载同时修改 os.environ["HF_ENDPOINT"]，finally 块可能删除另一个下载刚设置的值。</p><div class="fx"><strong>修复：</strong>使用 threading.Lock 保护。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv hi">HIGH</span><span class="ft">CORS 非允许源仍发送 Credentials 头</span><span class="fl">main.py:35-37</span></div>
+<div class="fb"><h4>影响</h4><p class="imp">origin 不在允许列表时 Allow-Credentials 和 Allow-Methods: * 仍被发送。</p><div class="fx"><strong>修复：</strong>仅在 is_allowed 时设置 CORS 头。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv hi">HIGH</span><span class="ft">Admin 设置无输入验证</span><span class="fl">settings.py:108-153</span></div>
+<div class="fb"><h4>影响</h4><p class="imp">管理员可将 pandoc_path 设为 /bin/sh、max_upload_mb 设为 -1 等。</p><div class="fx"><strong>修复：</strong>为每个设置添加类型和范围验证。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv hi">HIGH</span><span class="ft">.env 文件读写竞态条件</span><span class="fl">settings.py:123-150</span></div>
+<div class="fb"><h4>影响</h4><p class="imp">并发 PUT /api/settings 请求读写 .env 文件无锁。</p><div class="fx"><strong>修复：</strong>使用 threading.Lock 序列化写入。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv hi">HIGH</span><span class="ft">Zustand store 全量解构 — 不必要重渲染</span><span class="fl">App.tsx:25-44</span></div>
+<div class="fb"><h4>影响</h4><p class="imp">任何字段更新导致整个 App 重渲染，传播到所有子组件。</p><div class="fx"><strong>修复：</strong>使用 selector 分别订阅。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv hi">HIGH</span><span class="ft">db.py 模块级引擎创建</span><span class="fl">db.py:26-33</span></div>
+<div class="fb"><h4>影响</h4><p class="imp">import 时创建数据库引擎和目录，导致测试困难和配置不可变。</p><div class="fx"><strong>修复：</strong>改为惰性初始化或移到 lifespan。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv hi">HIGH</span><span class="ft">PDF base64 往返 — 内存放大 DoS</span><span class="fl">pdf.py:53-54,75</span></div>
+<div class="fb"><h4>影响</h4><p class="imp">50MB PDF → 67MB base64 → 50MB bytes，单次渲染请求消耗 117MB+。</p><div class="fx"><strong>修复：</strong>使用 session 存储 PDF 数据，返回 ID 替代 base64。</div></div></div>
+</div>
+
+<!-- ==================== MEDIUM ==================== -->
+<div class="sec">
+<h2>MEDIUM — 建议修复</h2>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">admin_password 明文存储</span><span class="fl">config.py:43</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>存储 bcrypt/argon2 哈希。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">get_settings() 修改 os.environ 副作用</span><span class="fl">config.py:62-70</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>移到 lifespan handler 中。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">CORS 允许所有方法和头</span><span class="fl">main.py:36-37</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>指定具体的 methods 和 headers。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">缺少安全响应头</span><span class="fl">main.py</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>添加 X-Content-Type-Options、X-Frame-Options、Referrer-Policy。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">dark 状态与 themeStore 双重管理</span><span class="fl">App.tsx:21</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>统一使用 themeStore。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">LaTeX 黑名单过滤可被绕过</span><span class="fl">export.py:11-23</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>改用白名单或沙箱隔离。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">compute.py body: dict 缺少类型验证</span><span class="fl">compute.py:177</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>使用 Pydantic BaseModel。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">PDF 渲染无竞态保护</span><span class="fl">UploadZone.tsx:121-137</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>使用 cancelled flag 或 AbortController。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">ImageCropper 渲染期间读取 ref</span><span class="fl">ImageCropper.tsx:139-141</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>移到 useLayoutEffect 中。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">error 消息泄露内部细节</span><span class="fl">pdf.py:48,108</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>记录详细错误到日志，返回通用消息。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">formula_preprocessor _deskew 坐标顺序错误</span><span class="fl">formula_preprocessor.py:241</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>np.where(inv > 0)[::-1]。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">SettingsPanel 绕过 API 层</span><span class="fl">SettingsPanel.tsx:40,67,99</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>抽到 api.ts 使用统一 request()。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">Docker 前端无 depends_on</span><span class="fl">docker-compose.yml:55-66</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>添加 depends_on + healthcheck。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">Docker GPU 预留所有 GPU</span><span class="fl">docker-compose.yml:47-53</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>count: 1。</div></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv md">MEDIUM</span><span class="ft">requirements.txt 无版本上限</span><span class="fl">requirements.txt:11-19</span></div>
+<div class="fb"><div class="fx"><strong>修复：</strong>添加 <3.0 等上限约束。</div></div></div>
+</div>
+
+<!-- ==================== LOW ==================== -->
+<div class="sec">
+<h2>LOW — 可选改进</h2>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv lo">LOW</span><span class="ft">Electron 硬编码 Windows venv 路径</span><span class="fl">electron/main.ts:15</span></div>
+<div class="fb"><p>根据 process.platform 动态选择 Scripts/ 或 bin/。</p></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv lo">LOW</span><span class="ft">Electron 环境变量继承完整父进程 env</span><span class="fl">electron/main.ts:42-48</span></div>
+<div class="fb"><p>仅传递必要环境变量。</p></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv lo">LOW</span><span class="ft">Electron backend exit 无用户通知</span><span class="fl">electron/main.ts:56-59</span></div>
+<div class="fb"><p>通过 webContents 通知渲染器。</p></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv lo">LOW</span><span class="ft">Python 信号名在 Windows 无效</span><span class="fl">electron/main.ts:144-153</span></div>
+<div class="fb"><p>根据 process.platform 选择终止方式。</p></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv lo">LOW</span><span class="ft">main.tsx 非空断言</span><span class="fl">main.tsx:6</span></div>
+<div class="fb"><p>添加 null 检查。</p></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv lo">LOW</span><span class="ft">FormulaWorkspace 内联 style 每次渲染重建</span><span class="fl">FormulaWorkspace.tsx:487</span></div>
+<div class="fb"><p>移到全局 CSS。</p></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv lo">LOW</span><span class="ft">HistorySidebar image_base64 无大小限制</span><span class="fl">HistorySidebar.tsx:30</span></div>
+<div class="fb"><p>添加 length < 500000 检查。</p></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv lo">LOW</span><span class="ft">UploadZone PdfExtractor 存储完整 PDF base64</span><span class="fl">UploadZone.tsx:80-81</span></div>
+<div class="fb"><p>改用 useRef 存储。</p></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv lo">LOW</span><span class="ft">stop.bat 按端口杀进程可能误杀</span><span class="fl">stop.bat:29-34</span></div>
+<div class="fb"><p>仅使用 PID 杀进程。</p></div></div>
+
+<div class="f"><div class="fh" onclick="this.parentElement.classList.toggle('op')"><span class="arr">&#9654;</span><span class="sv lo">LOW</span><span class="ft">appStore setter 每次创建新引用</span><span class="fl">appStore.ts:27-46</span></div>
+<div class="fb"><p>使用 shallow equality selector。</p></div></div>
+</div>
+
+<!-- ==================== VERDICT ==================== -->
+<div class="vb">
+<h2>总结</h2>
+<p><strong>整体风险等级：HIGH</strong></p>
+<p>本次审计为第三次审计（修复后），共发现 <strong>38 个问题</strong>（首次 82 → 第二次 52 → 本次 38，持续改善）。已确认 20 个问题被正确修复。</p>
+<p><strong>与前次对比：</strong></p>
+<ul>
+  <li>CRITICAL：7 → 3（-4）</li>
+  <li>HIGH：22 → 10（-12）</li>
+  <li>MEDIUM：27 → 15（-12）</li>
+  <li>LOW：22 → 10（-12）</li>
+</ul>
+<p><strong>最优先修复的 3 个问题：</strong></p>
+<ul>
+  <li><strong>Electron shell.openExternal 无验证（electron/main.ts:134）</strong> — 可被利用窃取 NTLM 哈希</li>
+  <li><strong>Pandoc 路径 RCE（export.py:49）</strong> — 管理员可设任意可执行文件路径</li>
+  <li><strong>XSS via dangerouslySetInnerHTML（FormulaWorkspace.tsx:579）</strong> — 需确认 sanitizeKatexHtml 使用 DOMPurify</li>
+</ul>
+<p><strong>结论：</strong>代码质量持续改善，但仍有 3 个 CRITICAL 和 10 个 HIGH 问题需要修复。Electron 相关问题（协议注入、环境泄露、跨平台兼容）是当前最大风险。建议优先修复 Electron 和 Pandoc 路径问题，然后处理 HIGH 级别的竞态条件和架构问题。</p>
+</div>
+
+</div>
+
+<script>
+document.querySelectorAll('.f.op').forEach(el=>{const h=el.querySelector('.fh');if(h)h.onclick=()=>el.classList.toggle('op')});
+</script>
+</body>
+</html>

@@ -57,6 +57,23 @@ def _sanitize_env_value(val: str) -> str:
     return val.replace("\n", "").replace("\r", "").replace("\0", "")
 
 
+SETTING_VALIDATORS = {
+    "max_upload_mb": lambda v: isinstance(v, int) and 1 <= v <= 500,
+    "history_limit": lambda v: isinstance(v, int) and 1 <= v <= 10000,
+    "max_loaded_models": lambda v: isinstance(v, int) and 1 <= v <= 10,
+    "pdf_dpi": lambda v: isinstance(v, int) and 72 <= v <= 600,
+    "model_download_timeout_sec": lambda v: isinstance(v, int) and 30 <= v <= 7200,
+    "default_model_id": lambda v: isinstance(v, str) and v in {"pix2text", "latex_ocr", "uni_equation"},
+    "app_device": lambda v: isinstance(v, str) and v in {"auto", "cpu", "cuda"},
+    "pandoc_path": lambda v: isinstance(v, str) and len(v) <= 512 and "\n" not in v,
+    "xelatex_path": lambda v: isinstance(v, str) and len(v) <= 512 and "\n" not in v,
+    "hf_endpoint": lambda v: isinstance(v, str) and len(v) <= 512,
+    "cors_origins": lambda v: isinstance(v, str) and len(v) <= 2048,
+    "database_url": lambda v: isinstance(v, str) and len(v) <= 1024,
+    "model_dir": lambda v: isinstance(v, str) and len(v) <= 512,
+}
+
+
 @router.post("/auth/admin")
 async def admin_login(request: Request):
     settings = get_settings()
@@ -66,7 +83,7 @@ async def admin_login(request: Request):
 
     if not settings.admin_password:
         return success({"token": "", "message": "管理员密码未设置，所有设置可自由修改"})
-    if not hmac.compare_digest(password.encode(), settings.admin_password.encode()):
+    if not settings.verify_admin_password(password):
         raise HTTPException(status_code=401, detail="密码错误")
 
     _purge_expired_tokens()
@@ -119,6 +136,11 @@ async def update_settings(request: Request):
     updates = {k: v for k, v in body.items() if k in allowed}
     if not updates:
         raise HTTPException(status_code=400, detail="No valid settings to update")
+
+    for key, val in updates.items():
+        validator = SETTING_VALIDATORS.get(key)
+        if validator and not validator(val):
+            raise HTTPException(status_code=400, detail=f"设置 {key} 的值无效: {val}")
 
     _purge_expired_tokens()
 

@@ -8,18 +8,30 @@ from app.routers.common import success
 
 router = APIRouter(prefix="/api/export", tags=["export"])
 
-_DANGEROUS_LATEX_PATTERNS = re.compile(
-    r"\\(write18|immediate|input\s*\{|include\s*\{|read\s|openin|closein|"
-    r"catcode|shellescape|system\s*\{|exec\s*\{|pipe\s*\{|"
-    r"def\s|newcommand|renewcommand|makeatletter|makeatother)",
+_SAFE_LATEX_COMMANDS = re.compile(
+    r"\\(frac|dfrac|tfrac|sqrt|sum|prod|int|iint|iiint|oint|"
+    r"partial|nabla|infty|pi|alpha|beta|gamma|delta|epsilon|zeta|eta|"
+    r"theta|iota|kappa|lambda|mu|nu|xi|rho|sigma|tau|upsilon|phi|chi|psi|omega|"
+    r"Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega|"
+    r"left|right|overline|underline|hat|bar|vec|dot|ddot|tilde|"
+    r"sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|sinh|cosh|tanh|"
+    r"ln|log|exp|lim|sup|inf|max|min|det|dim|mod|"
+    r"cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|"
+    r"subset|supset|cap|cup|in|notin|emptyset|"
+    r"rightarrow|leftarrow|Rightarrow|Leftarrow|"
+    r"mathrm|mathbb|mathbf|mathit|mathcal|text|operatorname|"
+    r"begin|end|array|matrix|pmatrix|bmatrix|vmatrix|"
+    r"mathrm|mathbb|mathbf)",
     re.IGNORECASE,
 )
 
 
 def _sanitize_latex_for_compile(latex: str) -> str:
-    """Block LaTeX commands that could execute shell commands."""
-    if _DANGEROUS_LATEX_PATTERNS.search(latex):
-        raise ValueError("LaTeX contains potentially dangerous commands")
+    """白名单过滤：仅允许安全的数学 LaTeX 命令。"""
+    all_commands = re.findall(r"\\[a-zA-Z]+", latex)
+    for cmd in all_commands:
+        if not _SAFE_LATEX_COMMANDS.match(cmd):
+            raise ValueError(f"LaTeX 包含不允许的命令: {cmd}")
     return latex
 
 

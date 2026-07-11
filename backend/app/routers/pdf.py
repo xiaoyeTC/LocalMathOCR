@@ -1,6 +1,8 @@
 import asyncio
 import base64
-import io
+import tempfile
+import uuid
+from pathlib import Path
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
@@ -11,6 +13,7 @@ router = APIRouter(prefix="/api/pdf", tags=["pdf"])
 
 MAX_PAGES = 50
 MAX_DPI = 600
+_pdf_sessions: dict[str, bytes] = {}
 
 
 @router.post("/info")
@@ -45,17 +48,26 @@ async def pdf_info(file: UploadFile = File(...)):
     try:
         total_pages = await loop.run_in_executor(None, _open_and_count)
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"无法打开 PDF: {exc}") from exc
+        import logging
+        logging.getLogger(__name__).warning("PDF open failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=400, detail="无法打开 PDF 文件，请检查文件是否损坏") from exc
 
     if total_pages > MAX_PAGES:
         raise HTTPException(status_code=400, detail=f"PDF 页数过多（{total_pages} 页，最大 {MAX_PAGES} 页）")
 
-    pdf_base64 = base64.b64encode(file_bytes).decode("utf-8")
-    return success({"total_pages": total_pages, "pdf_base64": pdf_base64})
+    pdf_id = str(uuid.uuid4())
+    _pdf_sessions[pdf_id] = file_bytes
+
+    if len(_pdf_sessions) > 50:
+        oldest = next(iter(_pdf_sessions))
+        del _pdf_sessions[oldest]
+
+    return success({"total_pages": total_pages, "pdf_id": pdf_id})
 
 
 @router.post("/render")
 async def render_page(body: dict):
+    pdf_id = body.get("pdf_id", "")
     pdf_base64 = body.get("pdf_base64", "")
     page = body.get("page", 1)
     dpi = body.get("dpi", get_settings().pdf_dpi)
@@ -68,13 +80,15 @@ async def render_page(body: dict):
     if dpi > MAX_DPI:
         dpi = MAX_DPI
 
-    if not pdf_base64:
-        raise HTTPException(status_code=400, detail="pdf_base64 不能为空")
-
-    try:
-        pdf_bytes = base64.b64decode(pdf_base64)
-    except Exception:
-        raise HTTPException(status_code=400, detail="pdf_base64 无效")
+    if pdf_id and pdf_id in _pdf_sessions:
+        pdf_bytes = _pdf_sessions[pdf_id]
+    elif pdf_base64:
+        try:
+            pdf_bytes = base64.b64decode(pdf_base64)
+        except Exception:
+            raise HTTPException(status_code=400, detail="pdf_base64 无效")
+    else:
+        raise HTTPException(status_code=400, detail="pdf_id 或 pdf_base64 不能为空")
 
     loop = asyncio.get_running_loop()
 
@@ -105,7 +119,9 @@ async def render_page(body: dict):
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"PDF 渲染失败: {exc}") from exc
+        import logging
+        logging.getLogger(__name__).warning("PDF render failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=400, detail="PDF 渲染失败，请降低 DPI 后重试") from exc
 
     return success({
         "page": page,

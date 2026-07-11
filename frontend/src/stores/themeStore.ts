@@ -24,8 +24,10 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 type ThemeState = {
   mode: ThemeMode;
   colorIndex: number;
+  dark: boolean;
   setMode: (mode: ThemeMode) => void;
   setColorIndex: (index: number) => void;
+  toggleDark: () => void;
 };
 
 function applyColorScheme(scheme: ColorScheme) {
@@ -38,29 +40,39 @@ function applyColorScheme(scheme: ColorScheme) {
 
 const STORAGE_KEY = 'localmathocr-theme';
 
-function loadSaved(): { mode: ThemeMode; colorIndex: number } {
+function loadSaved(): { mode: ThemeMode; colorIndex: number; dark: boolean } {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
-  return { mode: 'classic', colorIndex: 0 };
+  return { mode: 'classic', colorIndex: 0, dark: false };
 }
 
 const saved = loadSaved();
 
 export const useThemeStore = create<ThemeState>((set) => {
-  setTimeout(() => applyColorScheme(COLOR_SCHEMES[saved.colorIndex]), 0);
+  setTimeout(() => {
+    applyColorScheme(COLOR_SCHEMES[saved.colorIndex]);
+    document.documentElement.classList.toggle('dark', saved.dark);
+  }, 0);
   return {
     mode: saved.mode,
     colorIndex: saved.colorIndex,
+    dark: saved.dark,
     setMode: (mode) => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode, colorIndex: useThemeStore.getState().colorIndex }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode, colorIndex: useThemeStore.getState().colorIndex, dark: useThemeStore.getState().dark }));
       set({ mode });
     },
     setColorIndex: (colorIndex) => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: useThemeStore.getState().mode, colorIndex }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: useThemeStore.getState().mode, colorIndex, dark: useThemeStore.getState().dark }));
       applyColorScheme(COLOR_SCHEMES[colorIndex]);
       set({ colorIndex });
+    },
+    toggleDark: () => {
+      const next = !useThemeStore.getState().dark;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: useThemeStore.getState().mode, colorIndex: useThemeStore.getState().colorIndex, dark: next }));
+      document.documentElement.classList.toggle('dark', next);
+      set({ dark: next });
     },
   };
 });

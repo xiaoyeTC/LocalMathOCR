@@ -37,7 +37,10 @@ export function SettingsPanel({ onClose }: Props) {
       const sessionId = localStorage.getItem('localmathocr-session-id') || 'default';
       const headers: Record<string, string> = { 'X-Session-ID': sessionId };
       if (token) headers['X-Admin-Token'] = token;
-      const res = await fetch('/api/settings', { headers });
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch('/api/settings', { headers, signal: controller.signal });
+      clearTimeout(timer);
       if (!res.ok) { showMessage('API 错误: ' + res.status); setSettings({}); return; }
       const data = await res.json();
       if (data.code === 200 && data.data?.settings) {
@@ -64,11 +67,15 @@ export function SettingsPanel({ onClose }: Props) {
     if (!adminPassword.trim()) return;
     try {
       const sessionId = localStorage.getItem('localmathocr-session-id') || 'default';
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
       const res = await fetch('/api/auth/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Session-ID': sessionId },
         body: JSON.stringify({ password: adminPassword }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
       const data = await res.json();
       if (data.code === 200) {
         const token = data.data.token;
@@ -96,7 +103,10 @@ export function SettingsPanel({ onClose }: Props) {
       const sessionId = localStorage.getItem('localmathocr-session-id') || 'default';
       const headers: Record<string, string> = { 'Content-Type': 'application/json', 'X-Session-ID': sessionId };
       if (adminToken) headers['X-Admin-Token'] = adminToken;
-      const res = await fetch('/api/settings', { method: 'PUT', headers, body: JSON.stringify(settings) });
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch('/api/settings', { method: 'PUT', headers, body: JSON.stringify(settings), signal: controller.signal });
+      clearTimeout(timer);
       const data = await res.json();
       if (data.code === 200) showMessage('设置已保存，部分设置需重启后端生效', 'success');
       else showMessage(data.message || '保存失败');

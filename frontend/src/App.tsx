@@ -18,10 +18,9 @@ import { useThemeStore } from './stores/themeStore';
 const FALLBACK_MODEL_ID = 'pix2text';
 
 export default function App() {
-  const [dark, setDark] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const { mode: themeMode } = useThemeStore();
+  const { mode: themeMode, dark, toggleDark } = useThemeStore();
   const {
     latex,
     toast,
@@ -42,10 +41,6 @@ export default function App() {
     setHistory,
     setConfidence,
   } = useAppStore();
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark);
-  }, [dark]);
 
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -250,7 +245,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <Header modelStatus={modelStatus} models={models} selectedModelId={selectedModelId} dark={dark} onToggleDark={() => setDark((value) => !value)} onOpenSettings={() => setShowSettings(true)} />
+      <Header modelStatus={modelStatus} models={models} selectedModelId={selectedModelId} dark={dark} onToggleDark={toggleDark} onOpenSettings={() => setShowSettings(true)} />
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
       <main className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-8">
         <section className="mb-4 text-center sm:mb-8">

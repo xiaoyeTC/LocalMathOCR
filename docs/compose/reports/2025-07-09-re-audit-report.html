@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SimpleTex 全量代码审计报告 (修复后)</title>
+<style>
+  :root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--crit:#f85149;--high:#d29922;--med:#58a6ff;--low:#8b949e}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,'Segoe UI','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+  .c{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+  h1{font-size:2rem;margin-bottom:.5rem}
+  .sub{color:var(--muted);margin-bottom:2rem;font-size:.95rem}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin-bottom:2.5rem}
+  .st{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.2rem;text-align:center}
+  .st .n{font-size:2rem;font-weight:700}.st .l{color:var(--muted);font-size:.85rem;margin-top:.25rem}
+  .st.cr .n{color:var(--crit)}.st.hi .n{color:var(--high)}.st.md .n{color:var(--med)}.st.lo .n{color:var(--low)}.st.tl .n{color:var(--text)}
+  .sec{margin-bottom:2.5rem}
+  .sec h2{font-size:1.4rem;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+  .f{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:1rem;overflow:hidden}
+  .fh{padding:1rem 1.2rem;cursor:pointer;display:flex;align-items:center;gap:.75rem;user-select:none}
+  .fh:hover{background:#1c2129}
+  .sv{display:inline-block;padding:.15rem .6rem;border-radius:4px;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
+  .sv.cr{background:var(--crit);color:#fff}.sv.hi{background:var(--high);color:#000}.sv.md{background:var(--med);color:#000}.sv.lo{background:var(--low);color:#000}
+  .ft{font-weight:600;flex:1}.fl{color:var(--muted);font-size:.85rem;font-family:monospace;flex-shrink:0}
+  .fb{padding:0 1.2rem 1.2rem;display:none}.f.op .fb{display:block}
+  .fb h4{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.5px;margin:1rem 0 .5rem}.fb h4:first-child{margin-top:0}
+  pre{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:.8rem 1rem;overflow-x:auto;font-size:.85rem;line-height:1.5;margin:.5rem 0;font-family:'Fira Code','Consolas',monospace}
+  code{font-family:'Fira Code','Consolas',monospace;font-size:.88em;background:#1c2129;padding:.15rem .4rem;border-radius:3px}pre code{background:none;padding:0}
+  .imp{color:var(--crit)}.arr{transition:transform .2s;font-size:.8rem;color:var(--muted)}.f.op .arr{transform:rotate(90deg)}
+  .fix{background:#23863620;border:1px solid #23863640;border-radius:6px;padding:.6rem 1rem;margin:.5rem 0;font-size:.9rem}
+  .fixed{background:#238636;color:#fff;font-size:.7rem;padding:.1rem .4rem;border-radius:3px;margin-left:.5rem}
+  .vb{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin-top:2rem}
+  .vb h2{border:none;padding:0;margin-bottom:.75rem}.vb p{color:var(--muted);line-height:1.7}.vb strong{color:var(--text)}
+  .vb ul{margin:.75rem 0 0 1.5rem;color:var(--muted)}.vb li{margin-bottom:.3rem}
+  @media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}.fh{flex-wrap:wrap}.fl{width:100%}}
+</style>
+</head>
+<body>
+<div class="c">
+
+<h1>SimpleTex 全量代码审计报告（修复后）</h1>
+<p class="sub">审计时间：2025-07-09（修复后重新审计） | 范围：后端 + 前端 + 架构 | 方法：Fuck My Shit Mountain</p>
+
+<div class="stats">
+  <div class="st tl"><div class="n">52</div><div class="l">总发现数</div></div>
+  <div class="st cr"><div class="n">2</div><div class="l">CRITICAL</div></div>
+  <div class="st hi"><div class="n">14</div><div class="l">HIGH</div></div>
+  <div class="st md"><div class="n">18</div><div class="l">MEDIUM</div></div>
+  <div class="st lo"><div class="n">18</div><div class="l">LOW</div></div>
+</div>
+
+<!-- ==================== 已修复 ==================== -->
+<div class="sec">
+<h2>已修复的问题</h2>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv cr">CRITICAL</span>
+    <span class="ft">sympy.sympify 任意代码执行 — 已修复 <span class="fixed">已修复</span></span>
+    <span class="fl">compute.py:73-121</span>
+  </div>
+  <div class="fb">
+    <h4>修复内容</h4>
+    <p>已将 <code>sympy.sympify()</code> 替换为 <code>sympy.parsing.sympy_parser.parse_expr()</code>，使用 <code>evaluate=False</code> 和 <code>local_dict</code> 限制。所有未定义标识符被强制映射为 <code>sympy.Symbol</code>，无法引用 Python 内置函数。</p>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv cr">CRITICAL</span>
+    <span class="ft">LaTeX 注入 via xelatex — 已修复（部分） <span class="fixed">已修复</span></span>
+    <span class="fl">export.py:11-23</span>
+  </div>
+  <div class="fb">
+    <h4>修复内容</h4>
+    <p>已添加 <code>_sanitize_latex_for_compile()</code> 函数，在 <code>_convert_with_pandoc</code> 中调用。使用黑名单过滤 <code>\write18</code>、<code>\immediate</code>、<code>\input{}</code> 等危险命令。</p>
+    <h4>遗留风险</h4>
+    <p class="imp">黑名单方式仍可被绕过（\url{file:///etc/passwd}、\verbatiminput{file} 等）。建议改用白名单或沙箱隔离。</p>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv cr">CRITICAL</span>
+    <span class="ft">Admin token 验证绕过 — 已修复 <span class="fixed">已修复</span></span>
+    <span class="fl">settings.py:29-40</span>
+  </div>
+  <div class="fb">
+    <h4>修复内容</h4>
+    <p>已添加 <code>token not in _admin_tokens</code> 检查，token 必须存在于会话存储中才能认证。密码比较已改用 <code>hmac.compare_digest()</code> 防止计时攻击。</p>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">MathLive 事件监听器泄漏 — 已修复 <span class="fixed">已修复</span></span>
+    <span class="fl">FormulaWorkspace.tsx:330-356</span>
+  </div>
+  <div class="fb">
+    <h4>修复内容</h4>
+    <p>已添加 <code>removeEventListener</code> 清理逻辑，cleanup 函数中正确移除事件监听器。</p>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">showToast setTimeout 无 cleanup — 已修复 <span class="fixed">已修复</span></span>
+    <span class="fl">App.tsx:50-59</span>
+  </div>
+  <div class="fb">
+    <h4>修复内容</h4>
+    <p>已使用 <code>useRef</code> 追踪 timer，在新 toast 显示时清除旧 timer，防止竞态条件。</p>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">.env 换行注入 — 已修复 <span class="fixed">已修复</span></span>
+    <span class="fl">settings.py:53-55, 139, 147</span>
+  </div>
+  <div class="fb">
+    <h4>修复内容</h4>
+    <p>已添加 <code>_sanitize_env_value()</code> 函数，在写入 .env 前移除换行符和空字符。</p>
+  </div>
+</div>
+</div>
+
+<!-- ==================== CRITICAL ==================== -->
+<div class="sec">
+<h2>CRITICAL — 需要立即修复</h2>
+
+<div class="f op">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv cr">CRITICAL</span>
+    <span class="ft">文件上传先全量读入内存再校验大小 — OOM 拒绝服务</span>
+    <span class="fl">ocr.py:107-108</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>file_bytes = await file.read()  # 先读取全部内容到内存
+if len(file_bytes) > settings.max_upload_mb * 1024 * 1024:  # 再检查大小
+    raise HTTPException(status_code=413, ...)</code></pre>
+    <h4>影响</h4>
+    <p class="imp">攻击者可并发发送多个接近上限的文件，在大小检查之前耗尽服务器内存。100 个并发 10MB 请求即可占用 1GB 内存，导致 OOM。</p>
+    <div class="fix">
+      <strong>修复：</strong>分块读取并限制大小，或先检查 <code>file.size</code> header。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv cr">CRITICAL</span>
+    <span class="ft">dangerouslySetInnerHTML 使用 KaTeX 未转义输出 — XSS</span>
+    <span class="fl">FormulaWorkspace.tsx:572</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>dangerouslySetInnerHTML={{ __html: preview.html }}</code></pre>
+    <h4>影响</h4>
+    <p class="imp">KaTeX 在 strict: 'ignore' 模式下遇到未知宏时会生成包含原始输入的 HTML。如果 OCR 输入来自不可信来源（网络图片），可能注入任意 HTML/JS。</p>
+    <div class="fix">
+      <strong>修复：</strong>引入 DOMPurify 消毒 KaTeX 输出。
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== HIGH ==================== -->
+<div class="sec">
+<h2>HIGH — 需要尽快修复</h2>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">LaTeX 黑名单过滤可被绕过执行任意命令</span>
+    <span class="fl">export.py:11-23</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>_DANGEROUS_LATEX_PATTERNS = re.compile(
+    r"\\(write18|immediate|input\s*\{|include\s*\{|...)",
+)</code></pre>
+    <h4>影响</h4>
+    <p class="imp">黑名单可被绕过：\url{file:///etc/passwd}、\verbatiminput{file}、无花括号的 \input filename 等均不在黑名单中。</p>
+    <div class="fix">
+      <strong>修复：</strong>改用白名单方式，仅允许数学公式相关的安全命令。或使用沙箱环境隔离 pandoc 执行。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">Object URL 在成功裁剪时未 revoke — 内存泄漏</span>
+    <span class="fl">App.tsx:150-155</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>const handleCroppedFile = useCallback(async (file: File) => {
+  setCropImageSrc(null);  // 直接置 null，未 revoke URL</code></pre>
+    <h4>影响</h4>
+    <p class="impact">每次上传+确认裁剪操作都会泄漏一个 Blob URL，长时间使用后浏览器内存持续增长。</p>
+    <div class="fix">
+      <strong>修复：</strong>在 <code>setCropImageSrc(null)</code> 前调用 <code>URL.revokeObjectURL(cropImageSrc)</code>。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">SSE EventSource 无自动重连 — 模型状态流断开后不恢复</span>
+    <span class="fl">App.tsx:93-106</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>source.onerror = () => {
+  setModelStatus({ status: 'unavailable', ... });
+  // 自定义 onerror 覆盖了浏览器默认重连行为
+};</code></pre>
+    <h4>影响</h4>
+    <p class="impact">设置自定义 onerror 后，浏览器的自动重连机制被禁用。页面显示"正在等待重连"但实际永远不会重连。</p>
+    <div class="fix">
+      <strong>修复：</strong>在 onerror 中手动创建新的 EventSource 实现重连，或不设置自定义 onerror。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">SettingsPanel 绕过 API 抽象层 — Electron 兼容性断裂</span>
+    <span class="fl">SettingsPanel.tsx:36, 63, 95</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>const res = await fetch('/api/settings', { headers });  // 硬编码相对路径</code></pre>
+    <h4>影响</h4>
+    <p class="impact">Electron 环境中所有设置相关请求会 404，因为相对路径无法解析到正确的后端地址。</p>
+    <div class="fix">
+      <strong>修复：</strong>将设置的 GET/PUT/登录逻辑抽到 api.ts 中，使用统一的 request() 封装。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">PDF render 端点缺少输入验证 — DoS + 类型混淆</span>
+    <span class="fl">pdf.py:52-61</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>page = body.get("page", 1)        # 未验证类型
+dpi = body.get("dpi", ...)         # 未验证类型</code></pre>
+    <h4>影响</h4>
+    <p class="impact">page 传入超大数字导致渲染巨量页面耗尽内存；dpi 传入超大数值导致 get_pixmap 创建巨型位图。</p>
+    <div class="fix">
+      <strong>修复：</strong>添加类型和范围验证，使用 Pydantic 模型。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">Zustand store 全量解构导致不必要重渲染</span>
+    <span class="fl">App.tsx:25-44</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>const { latex, toast, loading, ... } = useAppStore();</code></pre>
+    <h4>影响</h4>
+    <p class="impact">任何字段更新时整个 App 组件重渲染，传播到所有子组件。</p>
+    <div class="fix">
+      <strong>修复：</strong>使用 selector 分别订阅每个字段。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">model_manager TOCTOU 竞态 — predict 与 activate 之间的锁间隙</span>
+    <span class="fl">model_manager.py:186-194</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>await self.activate(selected_id)  # 释放锁
+async with self._predict_lock:   # 重新获取锁（间隙）</code></pre>
+    <h4>影响</h4>
+    <p class="impact">在 activate 释放锁和 predict 获取锁的间隙，另一个请求可激活不同模型，导致当前请求的模型被卸载。</p>
+    <div class="fix">
+      <strong>修复：</strong>将 predict_lock 的获取移到 activate 调用之前。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">_progress_callback 无异常处理 — 任务泄漏</span>
+    <span class="fl">model_manager.py:252-253</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>self._loop.call_soon_threadsafe(lambda: asyncio.create_task(self.broadcast()))</code></pre>
+    <h4>影响</h4>
+    <p class="impact">broadcast() 抛出异常时产生 "Task exception was never retrieved" 警告；事件循环关闭期间 create_task 会抛 RuntimeError。</p>
+    <div class="fix">
+      <strong>修复：</strong>添加 try/except 包裹，使用 asyncio.ensure_future 替代 create_task。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">db get_session 缺少异常回滚 — 事务泄漏</span>
+    <span class="fl">db.py:57-59</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>async with AsyncSessionLocal() as session:
+    yield session  # 异常时事务未回滚</code></pre>
+    <h4>影响</h4>
+    <p class="impact">请求处理异常时事务不回滚，SQLite 中未回滚的事务会持有写锁，阻塞其他并发写操作。</p>
+    <div class="fix">
+      <strong>修复：</strong>添加 try/except/finally 块，异常时回滚，finally 时关闭。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">ocr.py 历史记录保存异常被静默吞掉</span>
+    <span class="fl">ocr.py:148-153</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>except Exception:
+    pass  # 所有异常被吞掉</code></pre>
+    <h4>影响</h4>
+    <p class="impact">数据库错误被完全静默吞掉，用户不知道历史记录没有被保存，无日志可追踪。</p>
+    <div class="fix">
+      <strong>修复：</strong>添加 logging.warning 记录异常。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">MathML 导出路径未过滤危险 LaTeX 命令</span>
+    <span class="fl">export.py:87-99</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>def _convert_to_mathml(latex: str) -> str:
+    result = subprocess.run(
+        [settings.pandoc_path, "-f", "latex", "-t", "mathml", "--wrap=none"],
+        input=latex.encode("utf-8"),  # 未调用 _sanitize_latex_for_compile</code></pre>
+    <h4>影响</h4>
+    <p class="impact">与其他导出路径不一致的安全策略，pandoc 的 LaTeX 解析器仍可能被恶意输入利用。</p>
+    <div class="fix">
+      <strong>修复：</strong>在 _convert_to_mathml 中添加 <code>latex = _sanitize_latex_for_compile(latex)</code>。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">模型权重下载无完整性校验 — 潜在 RCE</span>
+    <span class="fl">ocr_engine.py:155, 477-478</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>snapshot_download(repo_id=repo_id, local_dir=local_dir)  # 无 SHA256 校验</code></pre>
+    <h4>影响</h4>
+    <p class="impact">从 HuggingFace 下载的模型权重未经完整性校验。如果 HuggingFace 账户被入侵或遭遇中间人攻击，攻击者可替换模型文件。</p>
+    <div class="fix">
+      <strong>修复：</strong>确保所有下载通过 HTTPS；使用 huggingface_hub 的 revision 参数锁定版本。
+    </div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv hi">HIGH</span>
+    <span class="ft">_progress_callback 无锁修改 runtime 状态 — 数据竞争</span>
+    <span class="fl">model_manager.py:244-254</span>
+  </div>
+  <div class="fb">
+    <h4>证据</h4>
+<pre><code>runtime.state = "downloading"      # 无锁写入
+runtime.progress = max(0, min(100, progress))  # 无锁写入</code></pre>
+    <h4>影响</h4>
+    <p class="impact">非原子的多字段更新可能导致不一致状态，broadcast() 读取时可能看到矛盾信息。</p>
+    <div class="fix">
+      <strong>修复：</strong>使用 threading.Lock 保护多字段更新。
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== MEDIUM ==================== -->
+<div class="sec">
+<h2>MEDIUM — 建议修复</h2>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">CORS 允许所有方法和头</span>
+    <span class="fl">main.py:36-37</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>指定具体的 methods 和 headers。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">缺少安全响应头</span>
+    <span class="fl">main.py（整个文件）</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>添加 X-Content-Type-Options: nosniff、X-Frame-Options: DENY、Referrer-Policy。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">管理员 Token 是确定性的 — 无随机会话标识</span>
+    <span class="fl">settings.py:17-18</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>使用 secrets.token_hex(32) 生成随机 token。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">OCR 端点 session_id 无认证 — IDOR</span>
+    <span class="fl">ocr.py:147, history.py:12-13</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>验证 session_id 格式，限制长度和字符集。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">错误消息泄露内部实现细节</span>
+    <span class="fl">pdf.py:42,97</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>记录详细错误到日志，返回通用消息给客户端。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">os.environ 竞态条件 — 多线程模型下载</span>
+    <span class="fl">ocr_engine.py:146-166</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>使用 huggingface_hub 的 endpoint 参数或 threading.Lock。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">datetime.utcnow() 已废弃</span>
+    <span class="fl">db.py:22</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>使用 <code>datetime.now(timezone.utc)</code>。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">db 迁移函数吞掉所有异常</span>
+    <span class="fl">db.py:41-54</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>仅在"列已存在"时静默忽略，其他异常记录日志。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">formula_preprocessor _deskew 坐标顺序错误</span>
+    <span class="fl">formula_preprocessor.py:241-247</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>使用 <code>np.where(inv > 0)[::-1]</code> 将 (row, col) 转为 (x, y)。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">compute.py body: dict 缺少类型验证</span>
+    <span class="fl">compute.py:177</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>使用 Pydantic BaseModel 定义 ComputeRequest。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">PDF 渲染无竞态保护 — 快速翻页导致错乱</span>
+    <span class="fl">UploadZone.tsx:121-137</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>使用 cancelled flag 或 AbortController。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">dark 状态与 themeStore 双重管理</span>
+    <span class="fl">App.tsx:21, themeStore.ts</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>移除本地 dark 状态，统一使用 themeStore。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">无 React Error Boundary</span>
+    <span class="fl">App.tsx（全局）</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>在关键组件外包裹 Error Boundary。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">剪贴板操作逻辑在 5+ 个组件中重复</span>
+    <span class="fl">App.tsx:192, ComputePanel.tsx:112 等</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>抽取为共享 hook useCopyToClipboard()。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">/api/ocr 和 /api/recognize 端点完全重复</span>
+    <span class="fl">ocr.py:164-181</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>保留一个端点，另一个标注 deprecated。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">broadcast() 遍历 set 在并发 asyncio 中不安全</span>
+    <span class="fl">model_manager.py:229-242</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>使用 <code>list(self._subscribers)</code> 迭代副本。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">ocr.py 可疑公式最多 4 次推理，无客户端断连检测</span>
+    <span class="fl">ocr.py:125-136</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>在每次额外推理前检查 request.is_disconnected()。</div>
+  </div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv md">MEDIUM</span>
+    <span class="ft">postprocess _fix_unclosed_braces 不处理转义花括号</span>
+    <span class="fl">postprocess.py:198-230</span>
+  </div>
+  <div class="fb">
+    <div class="fix"><strong>修复：</strong>扫描时跳过 \{ 和 \} 转义字符。</div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== LOW ==================== -->
+<div class="sec">
+<h2>LOW — 可选改进</h2>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">内存存储 Token 字典 — 不支持多 Worker</span>
+    <span class="fl">settings.py:13</span>
+  </div>
+  <div class="fb"><p>使用 Redis 或文档说明单 worker 限制。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">PDF info 端点将完整 PDF base64 返回客户端</span>
+    <span class="fl">pdf.py:47-48</span>
+  </div>
+  <div class="fb"><p>使用 session 存储 PDF 数据，返回 session ID。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">管理员设置端点泄露 has_admin_password 状态</span>
+    <span class="fl">settings.py:100</span>
+  </div>
+  <div class="fb"><p>仅在已认证为管理员时返回此信息。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">FALLBACK_MODEL_ID 在前后端各定义一次</span>
+    <span class="fl">ocr.py:16, App.tsx:18</span>
+  </div>
+  <div class="fb"><p>后端在 /api/models 响应中返回 default_model_id。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">formula_preprocessor 包含 __main__ 演示代码</span>
+    <span class="fl">formula_preprocessor.py:360-428</span>
+  </div>
+  <div class="fb"><p>移到 scripts/ 目录。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">Electron getBackendPath 硬编码 Windows 路径</span>
+    <span class="fl">electron/main.ts:15</span>
+  </div>
+  <div class="fb"><p>根据 process.platform 动态选择路径。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">ocr_engine 中 _clear_cuda_cache 逻辑重复</span>
+    <span class="fl">ocr_engine.py:124-130, model_manager.py:294-302</span>
+  </div>
+  <div class="fb"><p>统一为一个共享工具函数。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">@ts-expect-error 抑制 MathLive 类型检查</span>
+    <span class="fl">FormulaWorkspace.tsx:536</span>
+  </div>
+  <div class="fb"><p>创建 mathlive.d.ts 声明文件。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">Header #editor 锚点指向不存在的元素</span>
+    <span class="fl">Header.tsx:53</span>
+  </div>
+  <div class="fb"><p>在 FormulaWorkspace 的 section 上添加 id="editor"。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">HistorySidebar image_base64 缺少 data: 前缀检查</span>
+    <span class="fl">HistorySidebar.tsx:30</span>
+  </div>
+  <div class="fb"><p>检查并补充 data:image/png;base64, 前缀。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">ocr.py content_type 校验与 magic bytes 冗余</span>
+    <span class="fl">ocr.py:105, 112</span>
+  </div>
+  <div class="fb"><p>移除 content_type 检查，仅依赖 magic bytes 校验。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">db.py 模块级创建数据库引擎和目录</span>
+    <span class="fl">db.py:25-32</span>
+  </div>
+  <div class="fb"><p>改为惰性初始化。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">postprocess _fix_ocr_hallucinations 可能误改非 LaTeX 文本</span>
+    <span class="fl">postprocess.py:123-164</span>
+  </div>
+  <div class="fb"><p>增加上下文判断。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">model_manager 默认模型回退无日志</span>
+    <span class="fl">model_manager.py:48-49</span>
+  </div>
+  <div class="fb"><p>添加 warning 日志。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">formula_preprocessor _ensure_min_size 放大后无上限</span>
+    <span class="fl">formula_preprocessor.py:323-343</span>
+  </div>
+  <div class="fb"><p>添加 max_dim=4096 限制。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">SettingsPanel showMessage setTimeout 无 cleanup</span>
+    <span class="fl">SettingsPanel.tsx:25-29</span>
+  </div>
+  <div class="fb"><p>使用 useRef 追踪 timer，cleanup 时 clearTimeout。</p></div>
+</div>
+
+<div class="f">
+  <div class="fh" onclick="this.parentElement.classList.toggle('op')">
+    <span class="arr">&#9654;</span>
+    <span class="sv lo">LOW</span>
+    <span class="ft">UploadZone results 列表使用 index 作为 key</span>
+    <span class="fl">UploadZone.tsx:246, 259</span>
+  </div>
+  <div class="fb"><p>为每个结果生成唯一 ID 作为 key。</p></div>
+</div>
+</div>
+
+<!-- ==================== VERDICT ==================== -->
+<div class="vb">
+<h2>总结</h2>
+<p><strong>整体风险等级：MEDIUM</strong></p>
+<p>本次审计为修复后重新审计，共发现 <strong>52 个问题</strong>（较首次审计 82 个减少 37%）。其中 6 个问题已被正确修复。</p>
+<p><strong>与首次审计对比：</strong></p>
+<ul>
+  <li>CRITICAL：7 → 2（减少 5 个，其中 3 个已修复，2 个降级为 HIGH）</li>
+  <li>HIGH：23 → 14（减少 9 个）</li>
+  <li>MEDIUM：31 → 18（减少 13 个）</li>
+  <li>LOW：21 → 18（减少 3 个）</li>
+</ul>
+<p><strong>最优先修复的 2 个问题：</strong></p>
+<ul>
+  <li><strong>文件上传 OOM（ocr.py:107）</strong> — 远程匿名可利用的拒绝服务，分块读取即可修复</li>
+  <li><strong>XSS via dangerouslySetInnerHTML（FormulaWorkspace.tsx:572）</strong> — 引入 DOMPurify 消毒</li>
+</ul>
+<p><strong>结论：</strong>修复效果显著，安全风险大幅降低。剩余 2 个 CRITICAL 问题中，文件上传 OOM 是最容易利用的，建议优先修复。XSS 问题需要引入 DOMPurify 依赖。整体代码质量已达到可上线水平，建议按 CRITICAL → HIGH 顺序完成剩余修复。</p>
+</div>
+
+</div>
+
+<script>
+document.querySelectorAll('.f.op').forEach(el => {
+  const h = el.querySelector('.fh');
+  if (h) h.onclick = () => el.classList.toggle('op');
+});
+</script>
+</body>
+</html>
