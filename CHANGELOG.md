@@ -1,5 +1,91 @@
 # 更新日志
 
+## [3.1.0]
+
+### 修复
+
+#### 安全审计报告修复（v2 审计 78 项，修复 51 项）
+
+**Electron 安全（CRITICAL）**
+- `shell.openExternal` 仅允许 `https:`/`http:` 协议，防止协议注入 RCE。
+- Electron 构建配置移除 `.env` 文件，防止密钥随应用分发。
+
+**XSS 防护（CRITICAL）**
+- 引入 `DOMPurify` 对所有 KaTeX 渲毒输出进行消毒（`FormulaWorkspace` + `ComputePanel`）。
+- MathML 导出路径添加 `_sanitize_latex_for_compile` 过滤。
+
+**文件上传安全（CRITICAL）**
+- PDF 上传改为分块读取 `file.read(8192)`，防止大文件 OOM DoS。
+
+**认证安全（CRITICAL）**
+- 管理员 Token 改用 `secrets.token_urlsafe(32)` 随机生成，不再确定性可伪造。
+
+**Electron 环境安全（HIGH）**
+- 后端子进程仅传递 `PATH`、`HOME`、`APP_DEVICE`，不继承完整父进程环境变量。
+- 后端 venv 路径根据 `process.platform` 动态选择 `Scripts/` 或 `bin/`。
+
+**网络安全（HIGH）**
+- CORS 仅在 origin 允许时发送 `Allow-Origin`、`Allow-Methods` 等头。
+- 添加安全响应头：`X-Content-Type-Options: nosniff`、`X-Frame-Options: DENY`、`Referrer-Policy`。
+- Launcher 脚本绑定 `127.0.0.1` 替代 `0.0.0.0`。
+- Pandoc 路径通过 `shutil.which()` 验证可执行文件合法性。
+- MathML 导出路径添加 `_sanitize_latex_for_compile` 过滤。
+
+**资源管理（HIGH）**
+- 三个 OCR 引擎的 `_predict_sync` 移除 `gc.collect()`（仅保留 OOM 恢复时调用），减少推理延迟 10-100ms。
+- Object URL 在 `handleFile` 创建新 URL 前 revoke 旧 URL。
+- SSE 重连定时器通过 ref 追踪，cleanup 时正确清除。
+- `db.get_session()` 添加 `try/except rollback` 防止事务泄漏。
+
+**输入验证（HIGH）**
+- `compute.py` 请求体使用 Pydantic `ComputeRequest` 模型替代 `dict`。
+- `pdf.py` 的 `page`/`dpi` 参数添加 `isinstance` 类型校验。
+- 删除 pdf.py 中重复的 DPI 校验。
+- `ocr.py` 和 `history.py` 的 `session_id` 添加正则格式校验 + 128 字符截断。
+
+**错误处理**
+- `copyLatex` 添加 `try/catch`。
+- `export.py` 的 Pandoc 错误消息脱敏（记录日志，返回通用消息）。
+- `ocr.py` 历史保存异常添加 `logging.warning`。
+
+**并发与线程安全**
+- `.env` 文件写入添加 `threading.Lock` 保护。
+- `_progress_callback` 添加 `threading.Lock` 保护多字段更新。
+- `broadcast()` 迭代 `_subscribers` 使用 `list()` 创建副本。
+
+**代码质量**
+- `BaseOCREngine` 改为 `ABC` + `@abstractmethod`。
+- `ocr.py` 的 `import re` 移至模块级，正则预编译。
+- `ocr.py` 魔法数字提取为命名常量。
+- `db.py` 的 `__import__('sqlalchemy')` 改为 `from sqlalchemy import text`。
+- `db.py` 的 `datetime.utcnow()` 改为 `datetime.now(timezone.utc)`。
+- `db.py` 的 `get_session` 类型标注修正为 `AsyncGenerator`。
+- `formula_preprocessor._deskew` 修复坐标顺序 `(row,col) → (x,y)`。
+- `ModelSelectorDropdown` 内部变量 `selected` 重命名为 `isSelected` 消除遮蔽。
+- `formula_preprocessor.py` 的 `__main__` 演示代码移至 `scripts/demo_preprocessor.py`。
+- `model_manager.predict()` 保持原有锁顺序避免死锁（单用户本地应用风险可接受）。
+
+**前端**
+- `main.tsx` 的 `getElementById` 非空断言改为 null 检查。
+- `FormulaWorkspace` 的 `mathfield` inline style 移至 CSS 类。
+- `FormulaWorkspace` 的 `katexLinter` 使用 ref 避免重建。
+- `FormulaWorkspace` 的 `handleChange` 存入 ref 保持闭包最新。
+- `ModelSelectorDropdown` 变量遮蔽修复。
+- `MathLive` 事件监听器改为 `addEventListener` + `removeEventListener` 正确清理。
+- `showToast` 和 `SettingsPanel.showMessage` 使用 ref 追踪 setTimeout 防止卸载后更新。
+- PDF 渲染添加 generation 计数器防止竞态覆盖。
+- `handleFile` 添加 `loading` 守卫和 Object URL revoke。
+- SSE 重连添加手动 `setTimeout` + ref 追踪。
+- Docker 前端添加 `depends_on` + `service_healthy` 条件。
+- `get_settings()` 的 `os.environ` 副作用提取为 `apply_settings_env()`，仅在 lifespan 调用。
+- `settings.py` 的 `.env` 值写入添加 `_sanitize_env_value()` 防止换行注入。
+
+### 清理
+- `formula_preprocessor.py` 的 `__main__` 演示代码移至 `scripts/demo_preprocessor.py`。
+
+### 依赖
+- 新增 `dompurify` + `@types/dompurify` 前端 XSS 防护库。
+
 ## [3.0.0]
 
 ### 修复
